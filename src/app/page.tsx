@@ -27,16 +27,16 @@ export default async function Home() {
       <Navbar />
       
       <main className="flex-grow">
-        {/* Hero Section */}
-        <section className="relative min-h-[600px] h-[70vh] lg:h-[85vh] w-full overflow-hidden">
-          <div className="absolute inset-0">
-            <img
-              src="https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?q=80&w=2000"
-              alt="Pakistani Fashion Hero"
-              className="h-full w-full object-cover object-[center_30%]"
-            />
-            <div className="absolute inset-0 bg-stone-900/40" />
-          </div>
+          {/* Hero Section */}
+          <section className="relative min-h-[600px] h-[80vh] lg:h-[85vh] w-full overflow-hidden">
+            <div className="absolute inset-0">
+              <img
+                src="https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?q=80&w=2400"
+                alt="Pakistani Fashion Hero"
+                className="h-full w-full object-cover object-center lg:object-[center_25%]"
+              />
+              <div className="absolute inset-0 bg-stone-900/30" />
+            </div>
           
           <div className="relative flex h-full items-center justify-center text-center px-4">
             <div className="max-w-4xl space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
