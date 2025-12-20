@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, SlidersHorizontal, ShoppingBag, Heart } from 'lucide-react';
 import Link from 'next/link';
+import { QuickAddToCart } from '@/components/QuickAddToCart';
 
 interface ShopPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -128,7 +129,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                     <div key={product.id} className="group flex flex-col space-y-4">
                       <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-stone-50 transition-shadow hover:shadow-xl">
                         <img
-                          src={Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : 'https://images.unsplash.com/photo-1610030469983-98e550d6193c'}
+                          src={Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : 'https://images.unsplash.com/photo-1594223274512-ad4803739b7c?q=80&w=1000'}
                           alt={product.name}
                           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
@@ -138,9 +139,14 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                           </button>
                         </div>
                         <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                          <Button className="w-full rounded-full bg-stone-900 text-white hover:bg-stone-800 shadow-lg">
-                            <ShoppingBag className="mr-2 h-4 w-4" /> Add to Cart
-                          </Button>
+                          <QuickAddToCart 
+                            product={{
+                              id: product.id,
+                              name: product.name,
+                              price: product.price,
+                              image: Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : 'https://images.unsplash.com/photo-1594223274512-ad4803739b7c?q=80&w=1000'
+                            }} 
+                          />
                         </div>
                       </div>
                       <div className="flex flex-col space-y-1 px-1">
