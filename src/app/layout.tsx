@@ -36,9 +36,10 @@ export default function RootLayout({
           data-debug="true"
           data-custom-data='{"appName": "YourApp", "version": "1.0.0", "greeting": "hi"}'
         />
-        <CartProvider>
-          {children}
-        </CartProvider>
+          <CartProvider>
+            {children}
+            <Toaster position="top-right" richColors />
+          </CartProvider>
         <VisualEditsMessenger />
       </body>
     </html>
