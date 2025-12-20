@@ -4,6 +4,7 @@ import VisualEditsMessenger from "../visual-edits/VisualEditsMessenger";
 import ErrorReporter from "@/components/ErrorReporter";
 import Script from "next/script";
 import { CartProvider } from "@/lib/cart-context";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "HJ Fashion USA | Premium Pakistani Women's Clothing",
