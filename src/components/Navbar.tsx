@@ -5,9 +5,11 @@ import { useState } from 'react';
 import { ShoppingBag, Search, User, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useCart } from '@/lib/cart-context';
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { totalItems } = useCart();
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
@@ -61,9 +63,11 @@ export function Navbar() {
             </Link>
             <Link href="/cart" className="relative group">
               <ShoppingBag className="h-6 w-6 text-stone-600 group-hover:text-stone-900 cursor-pointer transition-colors" />
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-stone-900 text-[10px] font-bold text-white">
-                0
-              </span>
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-stone-900 text-[10px] font-bold text-white">
+                  {totalItems}
+                </span>
+              )}
             </Link>
           </div>
         </div>
