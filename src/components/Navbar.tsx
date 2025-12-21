@@ -69,13 +69,13 @@ export function Navbar() {
           <div className="hidden lg:flex">
             <NavigationMenu>
               <NavigationMenuList className="gap-1">
-                <NavigationMenuItem>
-                  <Link href="/" legacyBehavior passHref>
-                    <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent")}>
-                      Home
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
+                  <NavigationMenuItem>
+                    <Link href="/" passHref>
+                      <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent")}>
+                        Home
+                      </NavigationMenuLink>
+                    </Link>
+                  </NavigationMenuItem>
                 
                 {categories.map((cat) => (
                   <NavigationMenuItem key={cat.slug}>
