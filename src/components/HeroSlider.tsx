@@ -68,29 +68,30 @@ export function HeroSlider() {
             
               <div className="relative flex h-full items-center justify-center text-center px-4">
                 <div className="max-w-4xl space-y-6 md:space-y-8">
-                    <div className="space-y-2">
-                      <h2 className="text-[10px] md:text-sm font-bold uppercase tracking-[0.4em] text-stone-200">
-                        {banner.subtitle}
-                      </h2>
-                      <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-serif font-bold text-white leading-[1.1]">
-                        {banner.title.split(',').map((part, i) => (
-                          <React.Fragment key={i}>
-                            {part}{i === 0 && banner.title.includes(',') && <br />}
-                          </React.Fragment>
-                        ))}
-                      </h1>
-                    </div>
-                    <p className="text-sm md:text-xl text-stone-100 font-light max-w-2xl mx-auto leading-relaxed px-4">
-                      {banner.description}
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4 items-center">
-                      <Button asChild size="lg" className="rounded-full px-10 h-12 md:h-14 bg-white text-stone-900 hover:bg-stone-100 border-none transition-all shadow-xl hover:scale-105 active:scale-95 text-sm md:text-base font-bold w-full sm:w-auto">
-                        <Link href={banner.link}>{banner.cta} <ArrowRight className="ml-2 h-5 w-5" /></Link>
-                      </Button>
-                      <Button asChild size="lg" className="rounded-full px-10 h-12 md:h-14 border border-white bg-transparent text-white hover:bg-white/10 transition-all text-sm md:text-base font-bold backdrop-blur-sm w-full sm:w-auto">
-                        <Link href="/shop">View Full Collection</Link>
-                      </Button>
-                    </div>
+                      <div className="space-y-4">
+                        <h2 className="text-[10px] md:text-xs font-bold uppercase tracking-[0.4em] text-stone-200">
+                          {banner.subtitle}
+                        </h2>
+                        <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-7xl font-serif font-bold text-white leading-[1.1] md:leading-[1.2]">
+                          {banner.title.split(',').map((part, i) => (
+                            <React.Fragment key={i}>
+                              {part}{i === 0 && banner.title.includes(',') && <br className="hidden md:block" />}
+                            </React.Fragment>
+                          ))}
+                        </h1>
+                      </div>
+                      <p className="text-sm md:text-lg text-stone-100 font-light max-w-xl mx-auto leading-relaxed px-4 opacity-90">
+                        {banner.description}
+                      </p>
+                      <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8 items-center">
+                        <Button asChild size="lg" className="rounded-full px-10 h-11 md:h-14 bg-white text-stone-900 hover:bg-stone-100 border-none transition-all shadow-xl hover:scale-105 active:scale-95 text-sm md:text-base font-bold w-full sm:w-auto">
+                          <Link href={banner.link}>{banner.cta} <ArrowRight className="ml-2 h-5 w-5" /></Link>
+                        </Button>
+                        <Button asChild size="lg" variant="ghost" className="rounded-full px-10 h-11 md:h-14 border border-white/50 hover:border-white bg-transparent text-white hover:bg-white/10 transition-all text-sm md:text-base font-bold backdrop-blur-md w-full sm:w-auto">
+                          <Link href="/shop">View Full Collection</Link>
+                        </Button>
+                      </div>
+
                 </div>
               </div>
             </section>
