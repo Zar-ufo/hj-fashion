@@ -53,10 +53,11 @@ export function HeroSlider() {
       onMouseLeave={plugin.current.reset}
     >
       <CarouselContent>
-        {BANNERS.map((banner, index) => (
-            <CarouselItem key={index}>
-              <section className="relative min-h-[500px] md:min-h-[600px] h-[80vh] lg:h-[85vh] w-full">
-                <div className="absolute inset-0 overflow-hidden">
+          {BANNERS.map((banner, index) => (
+              <CarouselItem key={index}>
+                <section className="relative min-h-[600px] h-[85vh] lg:h-[90vh] w-full">
+                  <div className="absolute inset-0 overflow-hidden">
+
                 <img
                   src={banner.image}
                   alt={banner.title}
