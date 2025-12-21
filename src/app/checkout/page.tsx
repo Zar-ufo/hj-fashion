@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { useCart } from '@/lib/cart-context';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
-import { ChevronLeft, Lock, ShieldCheck } from 'lucide-react';
+import { ChevronLeft, Lock, Shield } from 'lucide-react';
 import Link from 'next/link';
 
 const stripePromise = loadStripe(
