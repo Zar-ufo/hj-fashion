@@ -375,7 +375,7 @@ export default function CheckoutPage() {
 
                 <div className="p-6 bg-stone-900 rounded-3xl text-white space-y-4 shadow-xl">
                   <div className="flex items-center space-x-3">
-                    <ShieldCheck className="h-6 w-6 text-stone-400" />
+                    <Shield className="h-6 w-6 text-stone-400" />
                     <div>
                       <h4 className="text-sm font-bold">Secure Transactions</h4>
                       <p className="text-[10px] text-stone-400 uppercase tracking-widest">End-to-end encrypted payments</p>
