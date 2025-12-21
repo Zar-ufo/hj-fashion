@@ -110,11 +110,11 @@ export function Navbar() {
                         </NavigationMenuContent>
                       </>
                       ) : (
-                        <Link href={`/shop?category=${cat.slug}`} passHref>
-                          <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent")}>
+                        <NavigationMenuLink asChild>
+                          <Link href={`/shop?category=${cat.slug}`} className={cn(navigationMenuTriggerStyle(), "bg-transparent")}>
                             {cat.name}
-                          </NavigationMenuLink>
-                        </Link>
+                          </Link>
+                        </NavigationMenuLink>
                       )}
                   </NavigationMenuItem>
                 ))}
