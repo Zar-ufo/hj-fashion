@@ -243,7 +243,7 @@ export default async function Home() {
               </div>
               <div className="flex flex-col items-center text-center space-y-6">
                 <div className="h-20 w-20 rounded-2xl bg-stone-800 flex items-center justify-center text-stone-200 transition-transform hover:scale-110 duration-500">
-                  <ShieldCheck className="h-10 w-10" />
+                  <Shield className="h-10 w-10" />
                 </div>
                 <div className="space-y-3">
                   <h3 className="text-xl font-serif font-bold">Quality Guaranteed</h3>
