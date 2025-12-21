@@ -54,9 +54,9 @@ export function HeroSlider() {
     >
       <CarouselContent>
         {BANNERS.map((banner, index) => (
-          <CarouselItem key={index}>
-            <section className="relative min-h-[600px] h-[80vh] lg:h-[85vh] w-full overflow-hidden">
-              <div className="absolute inset-0">
+            <CarouselItem key={index}>
+              <section className="relative min-h-[500px] md:min-h-[600px] h-[80vh] lg:h-[85vh] w-full overflow-hidden">
+                <div className="absolute inset-0">
                 <img
                   src={banner.image}
                   alt={banner.title}
