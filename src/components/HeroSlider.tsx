@@ -66,7 +66,7 @@ export function HeroSlider() {
                 <div className="absolute inset-0 bg-stone-900/40" />
               </div>
             
-              <div className="relative flex h-full items-center justify-center text-center px-4">
+              <div className="relative flex h-full items-center justify-center text-center px-4 pb-12 md:pb-20">
                 <div className="max-w-4xl space-y-6 md:space-y-8">
                       <div className="space-y-4">
                         <h2 className="text-[10px] md:text-xs font-bold uppercase tracking-[0.4em] text-stone-200">
