@@ -109,13 +109,13 @@ export function Navbar() {
                           </ul>
                         </NavigationMenuContent>
                       </>
-                    ) : (
-                      <Link href={`/shop?category=${cat.slug}`} legacyBehavior passHref>
-                        <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent")}>
-                          {cat.name}
-                        </NavigationMenuLink>
-                      </Link>
-                    )}
+                      ) : (
+                        <Link href={`/shop?category=${cat.slug}`} passHref>
+                          <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent")}>
+                            {cat.name}
+                          </NavigationMenuLink>
+                        </Link>
+                      )}
                   </NavigationMenuItem>
                 ))}
               </NavigationMenuList>
