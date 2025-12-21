@@ -3,7 +3,7 @@ import { Footer } from '@/components/Footer';
 import { createServerSupabaseClient } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import { ProductActions } from '@/components/ProductActions';
-import { Star, ShieldCheck, Truck, RefreshCcw, ChevronRight } from 'lucide-react';
+import { Star, Truck, RefreshCcw, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
