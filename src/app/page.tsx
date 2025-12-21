@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Star, Truck, ShieldCheck, Heart, Instagram, Mail, ChevronRight, Quote } from 'lucide-react';
+import { ArrowRight, Star, Truck, Shield, Heart, Instagram, Mail, ChevronRight, Quote } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
