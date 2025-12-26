@@ -1,28 +1,110 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
-import { createServerSupabaseClient } from '@/lib/supabase';
-import { redirect } from 'next/navigation';
-import { SignOutButton } from '@/components/SignOutButton';
-import { Package, Calendar, Tag, ChevronRight, User } from 'lucide-react';
+import { Package, Calendar, Tag, ChevronRight, User, LogOut, Mail, AlertCircle, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/lib/auth-context';
+import { toast } from 'sonner';
 
-export default async function AccountPage() {
-  const supabase = createServerSupabaseClient();
-  
-  // Get current user session
-  const { data: { session } } = await supabase.auth.getSession();
+interface Order {
+  id: string;
+  created_at: string;
+  total: number;
+  status: string;
+  shipping_address?: string;
+  shipping_city?: string;
+  shipping_postal_code?: string;
+  shipping_country?: string;
+  items?: OrderItem[];
+}
 
-  if (!session) {
-    redirect('/login');
+interface OrderItem {
+  id: string;
+  size: string;
+  quantity: number;
+  price: number;
+  product?: {
+    name: string;
+    images: string[];
+  };
+}
+
+export default function AccountPage() {
+  const { user, isLoading, isAuthenticated, logout, resendVerificationEmail } = useAuth();
+  const router = useRouter();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [resendingEmail, setResendingEmail] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isLoading, isAuthenticated, router]);
+
+  useEffect(() => {
+    async function fetchOrders() {
+      if (!user) return;
+      
+      try {
+        const response = await fetch('/api/orders');
+        if (response.ok) {
+          const data = await response.json();
+          setOrders(Array.isArray(data) ? data : []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch orders:', error);
+      } finally {
+        setLoadingOrders(false);
+      }
+    }
+
+    if (user) {
+      fetchOrders();
+    }
+  }, [user]);
+
+  const handleLogout = async () => {
+    await logout();
+    toast.success('Logged out successfully');
+    router.push('/');
+  };
+
+  const handleResendVerification = async () => {
+    if (!user?.email) return;
+    
+    setResendingEmail(true);
+    const result = await resendVerificationEmail(user.email);
+    
+    if (result.success) {
+      toast.success(result.message || 'Verification email sent!');
+    } else {
+      toast.error(result.error || 'Failed to send verification email');
+    }
+    setResendingEmail(false);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen flex-col bg-white">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center">
+          <Loader2 className="h-12 w-12 animate-spin text-stone-400" />
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
-  const user = session.user;
+  if (!user) {
+    return null;
+  }
 
-  // Fetch orders for this user
-  const { data: orders } = await supabase
-    .from('orders')
-    .select('*, order_items(*, products(*))')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false });
+  const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'My Account';
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
@@ -30,6 +112,34 @@ export default async function AccountPage() {
 
       <main className="flex-grow container mx-auto px-4 py-12 lg:py-24">
         <div className="max-w-6xl mx-auto space-y-12">
+          {/* Email Verification Banner */}
+          {user && !user.email_verified && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-start space-x-4">
+                <AlertCircle className="h-6 w-6 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="font-bold text-amber-900">Verify your email</h3>
+                  <p className="text-sm text-amber-700">
+                    Please verify your email address to access all features.
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={handleResendVerification}
+                disabled={resendingEmail}
+                variant="outline"
+                className="rounded-full border-amber-300 text-amber-900 hover:bg-amber-100"
+              >
+                {resendingEmail ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Mail className="h-4 w-4 mr-2" />
+                )}
+                Resend Email
+              </Button>
+            </div>
+          )}
+
           {/* Header */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-8 border-b border-stone-100">
             <div className="flex items-center space-x-6">
@@ -37,11 +147,18 @@ export default async function AccountPage() {
                 <User className="h-10 w-10" />
               </div>
               <div>
-                <h1 className="text-3xl font-serif font-bold text-stone-900">{user.user_metadata?.full_name || 'My Account'}</h1>
+                <h1 className="text-3xl font-serif font-bold text-stone-900">{fullName}</h1>
                 <p className="text-stone-500 font-light">{user.email}</p>
               </div>
             </div>
-            <SignOutButton />
+            <Button 
+              onClick={handleLogout}
+              variant="outline" 
+              className="rounded-full"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
@@ -49,7 +166,11 @@ export default async function AccountPage() {
             <div className="lg:col-span-2 space-y-8">
               <h2 className="text-2xl font-serif font-bold text-stone-900">Order History</h2>
               
-              {orders && orders.length > 0 ? (
+              {loadingOrders ? (
+                <div className="py-24 text-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-stone-400 mx-auto" />
+                </div>
+              ) : orders && orders.length > 0 ? (
                 <div className="space-y-6">
                   {orders.map((order) => (
                     <div key={order.id} className="group border border-stone-100 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all">
@@ -61,39 +182,63 @@ export default async function AccountPage() {
                           </div>
                           <div>
                             <p className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Total Amount</p>
-                            <p className="text-sm font-bold text-stone-900">${order.total_amount}</p>
+                            <p className="text-sm font-bold text-stone-900">${order.total}</p>
                           </div>
                           <div>
                             <p className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Status</p>
                             <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                              order.status === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-stone-200 text-stone-600'
+                              order.status === 'DELIVERED' ? 'bg-emerald-100 text-emerald-700' : 
+                              order.status === 'SHIPPED' ? 'bg-blue-100 text-blue-700' :
+                              order.status === 'PROCESSING' ? 'bg-amber-100 text-amber-700' :
+                              'bg-stone-200 text-stone-600'
                             }`}>
                               {order.status}
                             </span>
                           </div>
                         </div>
-                        <p className="text-xs text-stone-400 font-mono">#{order.id.slice(0, 8)}</p>
+                        <p className="text-xs text-stone-400 font-mono">#{order.id}</p>
                       </div>
 
-                      <div className="p-6 space-y-6">
-                        {order.order_items?.map((item: any) => (
-                          <div key={item.id} className="flex items-center space-x-4">
-                            <div className="h-16 w-12 rounded-lg bg-stone-50 overflow-hidden flex-shrink-0">
-                              <img src={item.products?.images?.[0]} alt={item.products?.name} className="h-full w-full object-cover" />
+                      {(order.shipping_address || order.shipping_city || order.shipping_postal_code || order.shipping_country) && (
+                        <div className="px-6 pt-6">
+                          <div className="p-4 rounded-2xl bg-white border border-stone-100">
+                            <p className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Shipping Address</p>
+                            <div className="mt-2 space-y-1 text-sm text-stone-700">
+                              {order.shipping_address && <div>{order.shipping_address}</div>}
+                              {(order.shipping_city || order.shipping_postal_code) && (
+                                <div>
+                                  {[order.shipping_city, order.shipping_postal_code].filter(Boolean).join(' ')}
+                                </div>
+                              )}
+                              {order.shipping_country && <div>{order.shipping_country}</div>}
                             </div>
-                            <div className="flex-grow">
-                              <h4 className="text-sm font-bold text-stone-900">{item.products?.name}</h4>
-                              <p className="text-xs text-stone-400 uppercase tracking-widest mt-1">Size: {item.size} × {item.quantity}</p>
-                            </div>
-                            <p className="text-sm font-bold text-stone-900">${item.price}</p>
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      )}
+
+                      {order.items && order.items.length > 0 && (
+                        <div className="p-6 space-y-6">
+                          {order.items.map((item) => (
+                            <div key={item.id} className="flex items-center space-x-4">
+                              <div className="h-16 w-12 rounded-lg bg-stone-50 overflow-hidden flex-shrink-0">
+                                {item.product?.images?.[0] && (
+                                  <img src={item.product.images[0]} alt={item.product?.name} className="h-full w-full object-cover" />
+                                )}
+                              </div>
+                              <div className="flex-grow">
+                                <h4 className="text-sm font-bold text-stone-900">{item.product?.name}</h4>
+                                <p className="text-xs text-stone-400 uppercase tracking-widest mt-1">Size: {item.size} × {item.quantity}</p>
+                              </div>
+                              <p className="text-sm font-bold text-stone-900">${item.price}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
 
                       <div className="p-6 pt-0 flex justify-end">
-                        <button className="text-xs font-bold uppercase tracking-widest text-stone-900 hover:text-stone-600 transition-colors flex items-center">
-                          Track Package <ChevronRight className="ml-1 h-3 w-3" />
-                        </button>
+                        <div className="text-xs font-bold uppercase tracking-widest text-stone-400 flex items-center">
+                          Details shown above <ChevronRight className="ml-1 h-3 w-3" />
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -105,9 +250,11 @@ export default async function AccountPage() {
                     <p className="text-lg font-serif font-bold text-stone-900">No orders yet</p>
                     <p className="text-sm text-stone-500 max-w-xs mx-auto">When you make your first purchase, it will appear here.</p>
                   </div>
-                  <button className="rounded-full bg-stone-900 text-white px-8 py-3 text-sm font-bold">
-                    Start Shopping
-                  </button>
+                  <Link href="/shop">
+                    <Button className="rounded-full bg-stone-900 text-white px-8 py-3 text-sm font-bold">
+                      Start Shopping
+                    </Button>
+                  </Link>
                 </div>
               )}
             </div>
@@ -134,6 +281,15 @@ export default async function AccountPage() {
                     <div>
                       <p className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Total Orders</p>
                       <p className="text-sm font-bold text-stone-900">{orders?.length || 0}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-4">
+                    <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center text-stone-400 shadow-sm">
+                      <User className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Account Type</p>
+                      <p className="text-sm font-bold text-stone-900 capitalize">{user.role.toLowerCase()}</p>
                     </div>
                   </div>
                 </div>

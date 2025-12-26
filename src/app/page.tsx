@@ -3,8 +3,10 @@ import { ArrowRight, Star, Truck, Shield, Heart, Instagram, Mail, ChevronRight, 
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { createServerSupabaseClient } from '@/lib/supabase';
+import { getCategories, getOccasionCategories, getFeaturedEvent, getActiveEvents } from '@/lib/db-queries';
+import { getFeaturedProducts, getNewArrivals } from '@/lib/mock-data';
 import { QuickAddToCart } from '@/components/QuickAddToCart';
+import { WishlistButton } from '@/components/WishlistButton';
 import { HeroSlider } from '@/components/HeroSlider';
 import {
   Carousel,
@@ -15,34 +17,40 @@ import {
 } from "@/components/ui/carousel"
 
 export default async function Home() {
-  const supabase = createServerSupabaseClient();
+  // Fetch real data from database
+  const categories = await getCategories();
+  const occasionCategories = await getOccasionCategories();
+  const featuredEvent = await getFeaturedEvent();
+  const activeEvents = await getActiveEvents();
 
-  // Fetch featured products (Best Sellers)
-  const { data: featuredProducts } = await supabase
-    .from('products')
-    .select('*, categories(name)')
-    .eq('is_featured', true)
-    .limit(8);
+  const getShopByCategoryImage = (category: { slug: string; image_url?: string | null }) => {
+    if (category.slug === 'shoes') return '/shoes.jpeg';
+    if (category.slug === 'accessories') return '/accesories.png';
+    return category.image_url || 'https://images.unsplash.com/photo-1594223274512-ad4803739b7c?q=80&w=1000';
+  };
+  
+  // Use mock data for products (until products are fully migrated)
+  const featuredProducts = getFeaturedProducts();
+  const newArrivals = getNewArrivals(8);
 
-  // Fetch new arrivals
-  const { data: newArrivals } = await supabase
-    .from('products')
-    .select('*, categories(name)')
-    .order('created_at', { ascending: false })
-    .limit(8);
-
-  // Fetch all 9 categories
-  const { data: categories } = await supabase
-    .from('categories')
-    .select('*')
-    .order('name');
-
+  // Build occasions array from database
   const occasions = [
-    { name: 'Weddings', slug: 'weddings', image: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?q=80&w=1000' },
-    { name: 'Eid', slug: 'eid', image: 'https://images.unsplash.com/photo-1564760055775-d63b17a55c44?q=80&w=1000' },
-    { name: 'Parties', slug: 'parties', image: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=1000' },
-    { name: 'Casual', slug: 'casual', image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1000' },
-    { name: 'Formal', slug: 'formal', image: 'https://images.unsplash.com/photo-1507679799987-c7377457a18b?q=80&w=1000' },
+    // Featured event as the main banner
+    ...(featuredEvent ? [{
+      name: featuredEvent.name,
+      slug: featuredEvent.id,
+      image: featuredEvent.image_url || 'https://images.unsplash.com/photo-1564760055775-d63b17a55c44?q=80&w=1000',
+      featured: true,
+      subtitle: featuredEvent.description?.substring(0, 30) || 'Limited Time Offer',
+      countdown: `${featuredEvent.discount_percent}% OFF - Shop Now`
+    }] : []),
+    // Occasion categories from database
+    ...occasionCategories.map(cat => ({
+      name: cat.name,
+      slug: cat.slug,
+      image: cat.image_url || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=1000',
+      featured: false
+    }))
   ];
 
   const testimonials = [
@@ -60,115 +68,244 @@ export default async function Home() {
         <HeroSlider />
 
         {/* Featured Categories Grid */}
-        <section className="py-24 container mx-auto px-4">
-          <div className="text-center mb-16 space-y-4">
-            <h2 className="text-4xl md:text-5xl font-serif font-bold text-stone-900">Shop by Category</h2>
-            <p className="text-stone-500 max-w-xl mx-auto">Explore our curated collections across all categories of premium Pakistani and Indian fashion.</p>
+        <section className="py-24 bg-white">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-16 space-y-4">
+              <span className="text-xs uppercase tracking-[0.4em] text-black/40 font-medium">Curated Collections</span>
+              <h2 className="text-4xl md:text-5xl font-serif font-light text-black tracking-wide">Shop by Category</h2>
+              <div className="flex items-center justify-center gap-4 pt-2">
+                <div className="h-[1px] w-12 bg-black/20" />
+                <div className="h-1.5 w-1.5 bg-black rotate-45" />
+                <div className="h-[1px] w-12 bg-black/20" />
+              </div>
+              <p className="text-black/50 max-w-xl mx-auto font-light">Explore our curated collections across all categories of premium Pakistani and Indian fashion.</p>
+            </div>
+            
+            {/* Bento-style Grid Layout */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
+              {categories?.slice(0, 6).map((category, index) => (
+                <Link 
+                  key={category.id} 
+                  href={`/shop?category=${category.slug}`} 
+                  className={`group relative overflow-hidden border-2 border-black bg-black ${
+                    index === 0 ? 'col-span-2 row-span-2 aspect-square' : 
+                    index === 3 ? 'col-span-2 aspect-[2/1]' : 
+                    'aspect-[3/4]'
+                  }`}
+                >
+                  <img
+                    src={getShopByCategoryImage(category)}
+                    alt={category.name}
+                    className="h-full w-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:opacity-80"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  
+                  {/* Inner border accent */}
+                  <div className="absolute inset-3 md:inset-4 border border-white/20 pointer-events-none group-hover:border-white/50 transition-all duration-500" />
+                  
+                  {/* Content */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-end p-4 md:p-8 text-center text-white">
+                    <div className="transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                      <h3 className={`font-serif font-light tracking-wide mb-2 ${
+                        index === 0 ? 'text-2xl md:text-4xl' : 
+                        index === 3 ? 'text-xl md:text-3xl' : 
+                        'text-lg md:text-xl'
+                      }`}>
+                        {category.name}
+                      </h3>
+                      <div className="h-[1px] w-0 bg-white mx-auto group-hover:w-16 transition-all duration-500" />
+                      <p className="text-xs uppercase tracking-[0.25em] mt-3 opacity-0 group-hover:opacity-100 transition-all duration-500 delay-100">
+                        Explore
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Corner accents for featured item */}
+                  {index === 0 && (
+                    <>
+                      <div className="absolute top-4 left-4 w-6 h-6 border-l border-t border-white/40 group-hover:w-8 group-hover:h-8 transition-all duration-500" />
+                      <div className="absolute top-4 right-4 w-6 h-6 border-r border-t border-white/40 group-hover:w-8 group-hover:h-8 transition-all duration-500" />
+                      <div className="absolute bottom-20 left-4 w-6 h-6 border-l border-b border-white/40 group-hover:w-8 group-hover:h-8 transition-all duration-500" />
+                      <div className="absolute bottom-20 right-4 w-6 h-6 border-r border-b border-white/40 group-hover:w-8 group-hover:h-8 transition-all duration-500" />
+                    </>
+                  )}
+                </Link>
+              ))}
+            </div>
+
+            {/* View All Categories Button */}
+            <div className="flex justify-center mt-12">
+              <Link 
+                href="/shop" 
+                className="group inline-flex items-center gap-3 border-2 border-black px-8 py-4 text-xs uppercase tracking-[0.2em] font-medium hover:bg-black hover:text-white transition-all duration-300"
+              >
+                View All Categories
+                <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
           </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-            {categories?.map((category) => (
-              <Link key={category.id} href={`/shop?category=${category.slug}`} className="group relative aspect-[4/5] overflow-hidden rounded-2xl bg-stone-100 shadow-sm hover:shadow-xl transition-all duration-500">
+        </section>
+
+        {/* Shop by Occasion */}
+        <section className="py-24 bg-stone-50">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-16 space-y-4">
+              <h2 className="text-4xl font-serif font-bold text-stone-900">Shop by Occasion</h2>
+              <p className="text-stone-500 max-w-xl mx-auto">Find the perfect outfit for every event in your calendar.</p>
+            </div>
+            
+            {/* Featured Upcoming Event - Large Grid */}
+            {occasions.filter(o => o.featured).map((occasion) => (
+              <Link 
+                key={occasion.slug} 
+                href={`/shop?occasion=${occasion.slug}`} 
+                className="group relative block w-full aspect-[21/9] md:aspect-[3/1] overflow-hidden mb-6 border-2 border-black"
+              >
                 <img
-                  src={category.image_url || 'https://images.unsplash.com/photo-1594223274512-ad4803739b7c?q=80&w=1000'}
-                  alt={category.name}
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  src={occasion.image}
+                  alt={occasion.name}
+                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors duration-500" />
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center text-white">
-                  <h3 className="text-2xl md:text-3xl font-serif font-bold mb-2 transform group-hover:-translate-y-2 transition-transform duration-500">{category.name}</h3>
-                  <div className="h-1 w-12 bg-white mb-4 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
-                  <p className="text-sm font-medium uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center">
-                    Discover <ChevronRight className="ml-1 h-4 w-4" />
-                  </p>
+                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
+                  <span className="text-white/80 text-xs md:text-sm uppercase tracking-[0.3em] mb-3 border border-white/30 px-4 py-1.5">
+                    {occasion.subtitle}
+                  </span>
+                  <h3 className="text-white text-3xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 tracking-wide">
+                    {occasion.name}
+                  </h3>
+                  <div className="h-[1px] w-24 bg-white mb-6" />
+                  <span className="text-white text-sm md:text-base uppercase tracking-[0.2em] border-b border-white pb-1 group-hover:pb-2 transition-all">
+                    {occasion.countdown}
+                  </span>
                 </div>
+                {/* Corner accents */}
+                <div className="absolute top-4 left-4 w-8 h-8 border-l-2 border-t-2 border-white/50" />
+                <div className="absolute top-4 right-4 w-8 h-8 border-r-2 border-t-2 border-white/50" />
+                <div className="absolute bottom-4 left-4 w-8 h-8 border-l-2 border-b-2 border-white/50" />
+                <div className="absolute bottom-4 right-4 w-8 h-8 border-r-2 border-b-2 border-white/50" />
               </Link>
             ))}
+
+            {/* Other Occasions Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+              {occasions.filter(o => !o.featured).map((occasion) => (
+                <Link 
+                  key={occasion.slug} 
+                  href={`/shop?occasion=${occasion.slug}`} 
+                  className="group relative aspect-[3/4] overflow-hidden border-2 border-black hover:border-black transition-all"
+                >
+                  <img
+                    src={occasion.image}
+                    alt={occasion.name}
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+                    <span className="text-white text-lg md:text-xl lg:text-2xl font-serif font-bold text-center tracking-wide">
+                      {occasion.name}
+                    </span>
+                    <div className="h-[1px] w-8 bg-white mt-3 scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+                  </div>
+                  {/* Inner border accent */}
+                  <div className="absolute inset-3 border border-white/20 pointer-events-none group-hover:border-white/40 transition-colors" />
+                </Link>
+              ))}
+            </div>
           </div>
         </section>
 
         {/* New Arrivals Section */}
-        <section className="py-24 bg-stone-50">
+        <section className="py-24 bg-white">
           <div className="container mx-auto px-4">
-            <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+            {/* Section Header */}
+            <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
               <div className="space-y-4">
-                <h2 className="text-4xl font-serif font-bold text-stone-900">New Arrivals</h2>
-                <p className="text-stone-500 max-w-xl">Fresh off the loom. Check out our latest festive and seasonal collections direct from top designers.</p>
+                <span className="text-xs uppercase tracking-[0.4em] text-black/40 font-medium">Fresh Drops</span>
+                <h2 className="text-4xl md:text-5xl font-serif font-light text-black tracking-wide">New Arrivals</h2>
+                <div className="h-[1px] w-16 bg-black"></div>
+                <p className="text-black/50 max-w-xl font-light">Fresh off the loom. Check out our latest festive and seasonal collections direct from top designers.</p>
               </div>
-              <Button asChild variant="outline" className="rounded-full border-stone-300 hover:bg-stone-900 hover:text-white transition-all">
-                <Link href="/shop">View All New Arrivals</Link>
-              </Button>
+              <Link 
+                href="/shop" 
+                className="group inline-flex items-center gap-3 border-2 border-black px-8 py-4 text-xs uppercase tracking-[0.2em] font-medium hover:bg-black hover:text-white transition-all duration-300"
+              >
+                View All
+                <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
-              {newArrivals?.map((product) => (
-                <div key={product.id} className="group flex flex-col space-y-4">
-                  <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-white shadow-sm transition-shadow hover:shadow-lg">
+            {/* Products Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
+              {newArrivals?.map((product, index) => (
+                <div key={product.id} className="group flex flex-col">
+                  <div className="relative aspect-[3/4] overflow-hidden bg-black border-2 border-black mb-4">
                     <img
                       src={Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=1000'}
                       alt={product.name}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="h-full w-full object-cover transition-all duration-700 group-hover:scale-105 group-hover:opacity-90"
                     />
-                    <div className="absolute top-3 right-3">
-                      <button className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm text-stone-900 shadow-sm transition-colors hover:bg-stone-900 hover:text-white">
-                        <Heart className="h-5 w-5" />
-                      </button>
+                    {/* Inner border */}
+                    <div className="absolute inset-3 border border-white/20 pointer-events-none group-hover:border-white/40 transition-all duration-500" />
+                    
+                    {/* Wishlist button */}
+                    <div className="absolute top-4 right-4 z-10">
+                      <WishlistButton
+                        product={{
+                          id: product.id,
+                          name: product.name,
+                          slug: product.slug,
+                          price: product.price,
+                          image: Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=1000'
+                        }}
+                        className="h-9 w-9 bg-white/90 hover:bg-white border-0"
+                      />
                     </div>
+                    
+                    {/* Sale badge */}
                     {product.original_price && (
-                      <div className="absolute top-3 left-3 rounded-full bg-stone-900 px-3 py-1 text-[9px] font-bold uppercase tracking-wider text-white">
+                      <div className="absolute top-4 left-4 bg-black text-white px-3 py-1.5 text-[9px] font-medium uppercase tracking-[0.2em]">
                         Sale
                       </div>
                     )}
-                    <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                    
+                    {/* New badge for first 2 items */}
+                    {index < 2 && !product.original_price && (
+                      <div className="absolute top-4 left-4 bg-white text-black px-3 py-1.5 text-[9px] font-medium uppercase tracking-[0.2em] border border-black">
+                        New
+                      </div>
+                    )}
+                    
+                    {/* Quick add overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-500">
                       <QuickAddToCart 
                         product={{
                           id: product.id,
                           name: product.name,
+                          slug: product.slug,
                           price: product.price,
                           image: Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=1000'
                         }} 
                       />
                     </div>
                   </div>
-                  <div className="flex flex-col space-y-1">
-                    <span className="text-[10px] uppercase tracking-widest text-stone-400 font-bold">{product.categories?.name}</span>
-                    <Link href={`/product/${product.slug}`} className="text-base font-serif font-bold text-stone-900 hover:text-stone-600 truncate transition-colors">
+                  
+                  {/* Product info */}
+                  <div className="flex flex-col space-y-2 px-1">
+                    <span className="text-[10px] uppercase tracking-[0.2em] text-black/40 font-medium">{product.categories?.name}</span>
+                    <Link href={`/product/${product.slug}`} className="text-sm md:text-base font-serif font-light text-black hover:text-black/60 truncate transition-colors tracking-wide">
                       {product.name}
                     </Link>
-                    <div className="flex items-center space-x-2">
-                       <span className="text-base font-bold text-stone-900">${product.price}</span>
-                       {product.original_price && (
-                         <span className="text-xs text-stone-400 line-through">${product.original_price}</span>
-                       )}
+                    <div className="flex items-center space-x-3">
+                      <span className="text-base font-medium text-black">${product.price}</span>
+                      {product.original_price && (
+                        <span className="text-sm text-black/30 line-through">${product.original_price}</span>
+                      )}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        </section>
-
-        {/* Shop by Occasion */}
-        <section className="py-24 container mx-auto px-4">
-          <div className="text-center mb-16 space-y-4">
-            <h2 className="text-4xl font-serif font-bold text-stone-900">Shop by Occasion</h2>
-            <p className="text-stone-500 max-w-xl mx-auto">Find the perfect outfit for every event in your calendar.</p>
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {occasions.map((occasion) => (
-              <Link key={occasion.slug} href={`/shop?occasion=${occasion.slug}`} className="group relative aspect-square overflow-hidden rounded-xl">
-                 <img
-                  src={occasion.image}
-                  alt={occasion.name}
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-white text-xl font-serif font-bold border-b-2 border-white/0 group-hover:border-white transition-all duration-300">{occasion.name}</span>
-                </div>
-              </Link>
-            ))}
           </div>
         </section>
 
@@ -176,26 +313,41 @@ export default async function Home() {
         <section className="py-24 bg-white">
           <div className="container mx-auto px-4">
             <div className="text-center mb-16 space-y-4">
-              <h2 className="text-4xl font-serif font-bold text-stone-900">Our Best Sellers</h2>
-              <p className="text-stone-500 max-w-xl mx-auto">Most-loved styles that our customers are raving about.</p>
+              <span className="text-[10px] uppercase tracking-[0.4em] text-black/40 font-medium">Customer Favorites</span>
+              <h2 className="text-4xl md:text-5xl font-serif font-light text-black tracking-wide">Our Best Sellers</h2>
+              <div className="h-[1px] w-16 bg-black mx-auto"></div>
+              <p className="text-black/50 max-w-xl mx-auto font-light">Most-loved styles that our customers are raving about.</p>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
-              {featuredProducts?.map((product) => (
-                <div key={product.id} className="group flex flex-col space-y-4">
-                  <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-stone-50 shadow-sm transition-shadow hover:shadow-lg">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+              {featuredProducts?.map((product, index) => (
+                <div key={product.id} className="group">
+                  <div className="relative aspect-[3/4] overflow-hidden border-2 border-black bg-black mb-4">
                     <img
                       src={Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=1000'}
                       alt={product.name}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="h-full w-full object-cover transition-all duration-700 group-hover:scale-105"
                     />
-                    <div className="absolute top-3 right-3 flex flex-col gap-2">
-                       <div className="flex h-8 items-center space-x-1 rounded-full bg-white/90 backdrop-blur-sm px-2 text-stone-900 text-xs font-bold shadow-sm">
-                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                    {/* Inner border */}
+                    <div className="absolute inset-3 border border-white/20 pointer-events-none group-hover:border-white/40 transition-all" />
+                    
+                    {/* Rating badge */}
+                    <div className="absolute top-3 right-3">
+                       <div className="flex h-7 items-center space-x-1 bg-white px-2.5 text-black text-[10px] font-medium tracking-wide">
+                        <Star className="h-3 w-3 fill-black" />
                         <span>{product.ratings || 4.9}</span>
                       </div>
                     </div>
-                    <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                    
+                    {/* Bestseller badge */}
+                    {index === 0 && (
+                      <div className="absolute top-3 left-3 bg-black text-white text-[9px] font-medium uppercase tracking-[0.15em] px-3 py-1.5">
+                        #1 Seller
+                      </div>
+                    )}
+                    
+                    {/* Quick add */}
+                    <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-500">
                       <QuickAddToCart 
                         product={{
                           id: product.id,
@@ -206,57 +358,104 @@ export default async function Home() {
                       />
                     </div>
                   </div>
-                  <div className="flex flex-col space-y-1">
-                    <span className="text-[10px] uppercase tracking-widest text-stone-400 font-bold">{product.categories?.name}</span>
-                    <Link href={`/product/${product.slug}`} className="text-base font-serif font-bold text-stone-900 hover:text-stone-600 truncate transition-colors">
+                  <div className="space-y-2 px-1">
+                    <span className="text-[10px] uppercase tracking-[0.2em] text-black/40 font-medium">{product.categories?.name}</span>
+                    <Link href={`/product/${product.slug}`} className="block text-sm font-serif font-light text-black hover:text-black/60 truncate transition-colors tracking-wide">
                       {product.name}
                     </Link>
-                    <span className="text-base font-bold text-stone-900">${product.price}</span>
+                    <span className="text-sm font-medium text-black">${product.price}</span>
                   </div>
                 </div>
               ))}
+            </div>
+            
+            {/* View All Button */}
+            <div className="flex justify-center mt-14">
+              <Link 
+                href="/shop?sort=bestselling" 
+                className="group inline-flex items-center gap-3 border-2 border-black px-10 py-4 text-[11px] uppercase tracking-[0.2em] font-medium hover:bg-black hover:text-white transition-all duration-300"
+              >
+                Shop All Best Sellers
+                <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
             </div>
           </div>
         </section>
 
         {/* Why Choose HJ Fashion USA (Trust Section) */}
-        <section className="py-24 bg-stone-900 text-white">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
-              <div className="flex flex-col items-center text-center space-y-6">
-                <div className="h-20 w-20 rounded-2xl bg-stone-800 flex items-center justify-center text-stone-200 transition-transform hover:scale-110 duration-500">
-                  <Star className="h-10 w-10" />
+        <section className="py-24 bg-black text-white relative overflow-hidden">
+          {/* Background pattern */}
+          <div className="absolute inset-0 opacity-[0.03]">
+            <div className="absolute inset-0" style={{backgroundImage: 'repeating-linear-gradient(45deg, white 0, white 1px, transparent 0, transparent 50%)', backgroundSize: '20px 20px'}} />
+          </div>
+          
+          <div className="container mx-auto px-4 relative">
+            {/* Section Header */}
+            <div className="text-center mb-20 space-y-4">
+              <span className="text-[10px] uppercase tracking-[0.4em] text-white/40 font-medium">Why Choose Us</span>
+              <h2 className="text-3xl md:text-4xl font-serif font-light tracking-wide">The HJ Difference</h2>
+              <div className="h-[1px] w-16 bg-white/30 mx-auto"></div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+              <div className="group flex flex-col items-center text-center space-y-6 p-8 border border-white/10 hover:border-white/30 transition-all duration-500 relative">
+                {/* Corner accents */}
+                <div className="absolute top-0 left-0 w-4 h-4 border-l border-t border-white/30" />
+                <div className="absolute top-0 right-0 w-4 h-4 border-r border-t border-white/30" />
+                <div className="absolute bottom-0 left-0 w-4 h-4 border-l border-b border-white/30" />
+                <div className="absolute bottom-0 right-0 w-4 h-4 border-r border-b border-white/30" />
+                
+                <div className="h-16 w-16 border border-white/30 flex items-center justify-center text-white group-hover:bg-white group-hover:text-black transition-all duration-500">
+                  <Star className="h-6 w-6" />
                 </div>
                 <div className="space-y-3">
-                  <h3 className="text-xl font-serif font-bold">Authentic Fashion</h3>
-                  <p className="text-sm text-stone-400 leading-relaxed font-light">100% original Pakistani & Indian designer wear sourced directly from high-end labels.</p>
+                  <h3 className="text-lg font-serif font-light tracking-wide">Authentic Fashion</h3>
+                  <p className="text-[13px] text-white/50 leading-relaxed font-light">100% original Pakistani & Indian designer wear sourced directly from high-end labels.</p>
                 </div>
               </div>
-              <div className="flex flex-col items-center text-center space-y-6">
-                <div className="h-20 w-20 rounded-2xl bg-stone-800 flex items-center justify-center text-stone-200 transition-transform hover:scale-110 duration-500">
-                  <Truck className="h-10 w-10" />
+              
+              <div className="group flex flex-col items-center text-center space-y-6 p-8 border border-white/10 hover:border-white/30 transition-all duration-500 relative">
+                <div className="absolute top-0 left-0 w-4 h-4 border-l border-t border-white/30" />
+                <div className="absolute top-0 right-0 w-4 h-4 border-r border-t border-white/30" />
+                <div className="absolute bottom-0 left-0 w-4 h-4 border-l border-b border-white/30" />
+                <div className="absolute bottom-0 right-0 w-4 h-4 border-r border-b border-white/30" />
+                
+                <div className="h-16 w-16 border border-white/30 flex items-center justify-center text-white group-hover:bg-white group-hover:text-black transition-all duration-500">
+                  <Truck className="h-6 w-6" />
                 </div>
                 <div className="space-y-3">
-                  <h3 className="text-xl font-serif font-bold">US-Based Fast Shipping</h3>
-                  <p className="text-sm text-stone-400 leading-relaxed font-light">Inventory stored in USA for lightning-fast delivery across the states. No customs stress.</p>
+                  <h3 className="text-lg font-serif font-light tracking-wide">US-Based Fast Shipping</h3>
+                  <p className="text-[13px] text-white/50 leading-relaxed font-light">Inventory stored in USA for lightning-fast delivery across the states. No customs stress.</p>
                 </div>
               </div>
-              <div className="flex flex-col items-center text-center space-y-6">
-                <div className="h-20 w-20 rounded-2xl bg-stone-800 flex items-center justify-center text-stone-200 transition-transform hover:scale-110 duration-500">
-                  <Shield className="h-10 w-10" />
+              
+              <div className="group flex flex-col items-center text-center space-y-6 p-8 border border-white/10 hover:border-white/30 transition-all duration-500 relative">
+                <div className="absolute top-0 left-0 w-4 h-4 border-l border-t border-white/30" />
+                <div className="absolute top-0 right-0 w-4 h-4 border-r border-t border-white/30" />
+                <div className="absolute bottom-0 left-0 w-4 h-4 border-l border-b border-white/30" />
+                <div className="absolute bottom-0 right-0 w-4 h-4 border-r border-b border-white/30" />
+                
+                <div className="h-16 w-16 border border-white/30 flex items-center justify-center text-white group-hover:bg-white group-hover:text-black transition-all duration-500">
+                  <Shield className="h-6 w-6" />
                 </div>
                 <div className="space-y-3">
-                  <h3 className="text-xl font-serif font-bold">Quality Guaranteed</h3>
-                  <p className="text-sm text-stone-400 leading-relaxed font-light">Every piece undergoes rigorous quality checks to ensure perfect stitching and fabric quality.</p>
+                  <h3 className="text-lg font-serif font-light tracking-wide">Quality Guaranteed</h3>
+                  <p className="text-[13px] text-white/50 leading-relaxed font-light">Every piece undergoes rigorous quality checks to ensure perfect stitching and fabric quality.</p>
                 </div>
               </div>
-              <div className="flex flex-col items-center text-center space-y-6">
-                <div className="h-20 w-20 rounded-2xl bg-stone-800 flex items-center justify-center text-stone-200 transition-transform hover:scale-110 duration-500">
-                  <Heart className="h-10 w-10" />
+              
+              <div className="group flex flex-col items-center text-center space-y-6 p-8 border border-white/10 hover:border-white/30 transition-all duration-500 relative">
+                <div className="absolute top-0 left-0 w-4 h-4 border-l border-t border-white/30" />
+                <div className="absolute top-0 right-0 w-4 h-4 border-r border-t border-white/30" />
+                <div className="absolute bottom-0 left-0 w-4 h-4 border-l border-b border-white/30" />
+                <div className="absolute bottom-0 right-0 w-4 h-4 border-r border-b border-white/30" />
+                
+                <div className="h-16 w-16 border border-white/30 flex items-center justify-center text-white group-hover:bg-white group-hover:text-black transition-all duration-500">
+                  <Heart className="h-6 w-6" />
                 </div>
                 <div className="space-y-3">
-                  <h3 className="text-xl font-serif font-bold">Secure & Easy Returns</h3>
-                  <p className="text-sm text-stone-400 leading-relaxed font-light">Shop with confidence. Secure checkout and a hassle-free 14-day return policy.</p>
+                  <h3 className="text-lg font-serif font-light tracking-wide">Secure & Easy Returns</h3>
+                  <p className="text-[13px] text-white/50 leading-relaxed font-light">Shop with confidence. Secure checkout and a hassle-free 14-day return policy.</p>
                 </div>
               </div>
             </div>

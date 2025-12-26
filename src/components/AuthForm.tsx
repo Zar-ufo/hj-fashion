@@ -2,20 +2,25 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/lib/auth-context';
 
 export function AuthForm({ type }: { type: 'login' | 'register' }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { login, register } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,29 +28,38 @@ export function AuthForm({ type }: { type: 'login' | 'register' }) {
 
     try {
       if (type === 'register') {
-        const { error } = await supabase.auth.signUp({
+        // Validate password confirmation
+        if (password !== confirmPassword) {
+          toast.error('Passwords do not match');
+          setIsLoading(false);
+          return;
+        }
+
+        const result = await register({
           email,
           password,
-          options: {
-            data: {
-              full_name: fullName,
-            },
-          },
+          first_name: firstName || undefined,
+          last_name: lastName || undefined,
         });
-        if (error) throw error;
-        toast.success('Registration successful! Please check your email for verification.');
+
+        if (result.success) {
+          toast.success('Account created! Please check your email to verify your account.');
+          router.push('/account');
+        } else {
+          toast.error(result.error || 'Registration failed');
+        }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
-        toast.success('Logged in successfully!');
-        router.push('/account');
-        router.refresh();
+        const result = await login(email, password, rememberMe);
+
+        if (result.success) {
+          toast.success('Welcome back!');
+          router.push('/account');
+        } else {
+          toast.error(result.error || 'Invalid email or password');
+        }
       }
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch {
+      toast.error('An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -66,17 +80,28 @@ export function AuthForm({ type }: { type: 'login' | 'register' }) {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {type === 'register' && (
-          <div className="space-y-2">
-            <Label htmlFor="fullName" className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Full Name</Label>
-            <div className="relative">
-              <User className="absolute left-3 top-3 h-5 w-5 text-stone-300" />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="firstName" className="text-[10px] uppercase tracking-widest font-bold text-stone-400">First Name</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-3 h-5 w-5 text-stone-300" />
+                <Input
+                  id="firstName"
+                  placeholder="Hina"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="pl-10 h-12 rounded-xl border-stone-200"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lastName" className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Last Name</Label>
               <Input
-                id="fullName"
-                placeholder="Hina Javed"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
-                className="pl-10 h-12 rounded-xl border-stone-200"
+                id="lastName"
+                placeholder="Javed"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className="h-12 rounded-xl border-stone-200"
               />
             </div>
           </div>
@@ -102,22 +127,70 @@ export function AuthForm({ type }: { type: 'login' | 'register' }) {
           <div className="flex justify-between items-center">
             <Label htmlFor="password" className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Password</Label>
             {type === 'login' && (
-              <Link href="#" className="text-[10px] uppercase tracking-widest font-bold text-stone-400 hover:text-stone-900 transition-colors">Forgot Password?</Link>
+              <Link href="/forgot-password" className="text-[10px] uppercase tracking-widest font-bold text-stone-400 hover:text-stone-900 transition-colors">
+                Forgot Password?
+              </Link>
             )}
           </div>
           <div className="relative">
             <Lock className="absolute left-3 top-3 h-5 w-5 text-stone-300" />
             <Input
               id="password"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="pl-10 h-12 rounded-xl border-stone-200"
+              minLength={type === 'register' ? 8 : undefined}
+              className="pl-10 pr-10 h-12 rounded-xl border-stone-200"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-3 h-5 w-5 text-stone-300 hover:text-stone-600"
+            >
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
           </div>
+          {type === 'register' && (
+            <p className="text-xs text-stone-400">
+              At least 8 characters with uppercase, lowercase, and a number
+            </p>
+          )}
         </div>
+
+        {type === 'login' && (
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="rememberMe"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="h-4 w-4 rounded border-stone-300 text-stone-900 focus:ring-stone-500 cursor-pointer"
+            />
+            <label htmlFor="rememberMe" className="text-sm text-stone-600 cursor-pointer select-none">
+              Remember me for 30 days
+            </label>
+          </div>
+        )}
+
+        {type === 'register' && (
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword" className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Confirm Password</Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-3 h-5 w-5 text-stone-300" />
+              <Input
+                id="confirmPassword"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="pl-10 h-12 rounded-xl border-stone-200"
+              />
+            </div>
+          </div>
+        )}
 
         <Button 
           type="submit" 
@@ -126,7 +199,7 @@ export function AuthForm({ type }: { type: 'login' | 'register' }) {
         >
           {isLoading ? 'Processing...' : (
             <span className="flex items-center">
-              {type === 'login' ? 'Sign In' : 'Sign Up'} <ArrowRight className="ml-2 h-5 w-5" />
+              {type === 'login' ? 'Sign In' : 'Create Account'} <ArrowRight className="ml-2 h-5 w-5" />
             </span>
           )}
         </Button>

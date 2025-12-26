@@ -10,6 +10,7 @@ interface ProductActionsProps {
   product: {
     id: string;
     name: string;
+    slug?: string;
     price: number;
     images: string[];
     sizes: string[];
@@ -18,10 +19,12 @@ interface ProductActionsProps {
 }
 
 export function ProductActions({ product }: ProductActionsProps) {
-  const { addToCart } = useCart();
+  const { addToCart, addToWishlist, removeFromWishlist, isInWishlist } = useCart();
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
+
+  const inWishlist = isInWishlist(product.id);
 
   const handleAddToCart = () => {
     if (product.sizes.length > 0 && !selectedSize) {
@@ -33,6 +36,7 @@ export function ProductActions({ product }: ProductActionsProps) {
     
     addToCart({
       productId: product.id,
+      slug: product.slug,
       name: product.name,
       price: product.price,
       quantity: quantity,
@@ -44,6 +48,22 @@ export function ProductActions({ product }: ProductActionsProps) {
       setIsAdding(false);
       toast.success(`${product.name} added to cart!`);
     }, 500);
+  };
+
+  const handleWishlistToggle = () => {
+    if (inWishlist) {
+      removeFromWishlist(product.id);
+      toast.success('Removed from wishlist');
+    } else {
+      addToWishlist({
+        productId: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.images[0],
+        slug: product.slug,
+      });
+      toast.success('Added to wishlist!');
+    }
   };
 
   return (
@@ -104,8 +124,15 @@ export function ProductActions({ product }: ProductActionsProps) {
             )}
             {isAdding ? 'Added' : 'Add to Cart'}
           </Button>
-          <button className="flex h-12 w-12 items-center justify-center rounded-full border border-stone-200 text-stone-600 hover:text-rose-500 hover:border-rose-200 transition-all">
-            <Heart className="h-6 w-6" />
+          <button 
+            onClick={handleWishlistToggle}
+            className={`flex h-12 w-12 items-center justify-center rounded-full border transition-all ${
+              inWishlist 
+                ? 'border-rose-200 bg-rose-50 text-rose-500' 
+                : 'border-stone-200 text-stone-600 hover:text-rose-500 hover:border-rose-200'
+            }`}
+          >
+            <Heart className={`h-6 w-6 ${inWishlist ? 'fill-rose-500' : ''}`} />
           </button>
         </div>
       </div>
