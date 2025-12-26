@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { createEvent, getAllEvents, updateEvent, deleteEvent } from '@/lib/db-queries';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // GET all events
 export async function GET() {
   try {
