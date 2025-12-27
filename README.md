@@ -30,3 +30,16 @@ The frontend proxies all `/api/*` requests to the backend via a rewrite configur
 
 - Backend secrets (DB/email/JWT) live in `backend/.env.local`.
 - Frontend uses `frontend/.env.local` with `BACKEND_URL` (defaults to `http://localhost:3001`).
+
+### GitHub / Git ignore
+
+This repo intentionally ignores real env files (like `.env`, `.env.local`) so secrets are not committed.
+
+- Use the committed templates:
+	- `backend/.env.example`
+	- `frontend/.env.example`
+- Create your local files by copying:
+	- `backend/.env.example` → `backend/.env.local`
+	- `frontend/.env.example` → `frontend/.env.local`
+
+For production, set env vars in your hosting provider dashboards (Render for backend, Vercel for frontend) rather than committing them to GitHub.
