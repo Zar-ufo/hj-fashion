@@ -35,7 +35,8 @@ const nextConfig: NextConfig = {
     const backendUrl = process.env.BACKEND_URL || 'https://hj-fashion-3.onrender.com';
     return [
       {
-        source: '/api/:path*',
+        // Skip routes that have custom handlers in /api/auth/
+        source: '/api/:path((?!auth/verify-email).*)',
         destination: `${backendUrl}/api/:path*`,
       },
     ];

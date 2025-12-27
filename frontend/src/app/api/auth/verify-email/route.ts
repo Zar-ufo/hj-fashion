@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // Force Node.js runtime (not Edge) for longer timeout support
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60; // Maximum timeout for Vercel hobby plan
 
 const BACKEND_URL = process.env.BACKEND_URL || 'https://hj-fashion-3.onrender.com';
 
@@ -10,9 +11,9 @@ async function proxyToBackend(
   request: NextRequest,
   method: 'GET' | 'POST' | 'PUT'
 ): Promise<NextResponse> {
+  const url = `${BACKEND_URL}/api/auth/verify-email`;
+  
   try {
-    const url = `${BACKEND_URL}/api/auth/verify-email`;
-    
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
     };
@@ -28,29 +29,39 @@ async function proxyToBackend(
       try {
         body = await request.text();
       } catch {
-        body = undefined;
+        body = '{}';
       }
     }
 
-    // Simple fetch with generous timeout (no AbortController for max compatibility)
+    console.log(`[verify-email proxy] ${method} ${url}`);
+
     const response = await fetch(url, {
       method,
       headers,
       body: method !== 'GET' ? body : undefined,
+      cache: 'no-store',
     });
     
     const responseText = await response.text();
+    console.log(`[verify-email proxy] Response: ${response.status} - ${responseText.substring(0, 100)}`);
     
+    // Return the response as-is
     return new NextResponse(responseText, {
       status: response.status,
       headers: {
         'Content-Type': response.headers.get('Content-Type') || 'application/json',
       },
     });
-  } catch (err) {
-    console.error('Proxy to backend failed:', err);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    console.error(`[verify-email proxy] Error: ${errorMessage}`);
+    
+    // Return a proper JSON error response
     return NextResponse.json(
-      { error: 'Backend service temporarily unavailable. Please try again.' },
+      { 
+        error: 'Backend service temporarily unavailable. Please try again in a moment.',
+        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+      },
       { status: 502 }
     );
   }
