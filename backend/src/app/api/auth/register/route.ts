@@ -8,9 +8,10 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { email, password, first_name, last_name } = body;
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
 
     // Validate required fields
-    if (!email || !password) {
+    if (!normalizedEmail || !password) {
       return NextResponse.json(
         { error: 'Email and password are required' },
         { status: 400 }
@@ -18,7 +19,7 @@ export async function POST(request: Request) {
     }
 
     // Validate email format
-    if (!validateEmail(email)) {
+    if (!validateEmail(normalizedEmail)) {
       return NextResponse.json(
         { error: 'Please provide a valid email address' },
         { status: 400 }
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
     }
 
     // Check if user already exists
-    const existingUser = await getUserByEmail(email);
+    const existingUser = await getUserByEmail(normalizedEmail);
     if (existingUser) {
       return NextResponse.json(
         { error: 'An account with this email already exists' },
@@ -48,7 +49,7 @@ export async function POST(request: Request) {
 
     // Create user
     const user = await createUser({
-      email,
+      email: normalizedEmail,
       password_hash,
       first_name,
       last_name,
@@ -65,10 +66,10 @@ export async function POST(request: Request) {
     });
 
     // Send verification email
-    const verificationSent = await sendEmailVerificationEmail(email, verificationToken, first_name);
+    const verificationSent = await sendEmailVerificationEmail(normalizedEmail, verificationToken, first_name);
 
     // Send welcome email (non-blocking for registration success)
-    await sendWelcomeEmail(email, first_name);
+    await sendWelcomeEmail(normalizedEmail, first_name);
 
     // Create JWT token
     const token = await createToken({

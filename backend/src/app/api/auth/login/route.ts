@@ -7,9 +7,10 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { email, password, rememberMe = false } = body;
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
 
     // Validate required fields
-    if (!email || !password) {
+    if (!normalizedEmail || !password) {
       return NextResponse.json(
         { error: 'Email and password are required' },
         { status: 400 }
@@ -17,7 +18,7 @@ export async function POST(request: Request) {
     }
 
     // Validate email format
-    if (!validateEmail(email)) {
+    if (!validateEmail(normalizedEmail)) {
       return NextResponse.json(
         { error: 'Please provide a valid email address' },
         { status: 400 }
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
     }
 
     // Find user by email with auth details
-    const user = await getUserWithAuthDetails(email);
+    const user = await getUserWithAuthDetails(normalizedEmail);
     if (!user) {
       return NextResponse.json(
         { error: 'Invalid email or password' },

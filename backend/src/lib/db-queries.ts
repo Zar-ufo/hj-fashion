@@ -1,5 +1,9 @@
 import prisma from './db';
 
+function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
 // Product queries
 export async function getProducts() {
   return prisma.product.findMany({
@@ -237,8 +241,14 @@ export async function getFeaturedEvent() {
 
 // User queries
 export async function getUserByEmail(email: string) {
-  return prisma.user.findUnique({
-    where: { email },
+  const normalizedEmail = normalizeEmail(email);
+  return prisma.user.findFirst({
+    where: {
+      email: {
+        equals: normalizedEmail,
+        mode: 'insensitive',
+      },
+    },
   });
 }
 
@@ -249,7 +259,10 @@ export async function createUser(data: {
   last_name?: string;
 }) {
   return prisma.user.create({
-    data,
+    data: {
+      ...data,
+      email: normalizeEmail(data.email),
+    },
   });
 }
 
@@ -626,8 +639,14 @@ export async function updateUserPassword(userId: string, passwordHash: string) {
 }
 
 export async function getUserWithAuthDetails(email: string) {
-  return prisma.user.findUnique({
-    where: { email },
+  const normalizedEmail = normalizeEmail(email);
+  return prisma.user.findFirst({
+    where: {
+      email: {
+        equals: normalizedEmail,
+        mode: 'insensitive',
+      },
+    },
     select: {
       id: true,
       email: true,
