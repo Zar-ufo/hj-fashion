@@ -18,7 +18,7 @@ import {
 export const dynamic = 'force-dynamic';
 
 async function fetchApi<T>(path: string): Promise<T> {
-  const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
+  const backendUrl = process.env.BACKEND_URL || 'https://hj-fashion-3.onrender.com';
   const res = await fetch(`${backendUrl}${path}`, { cache: 'no-store' });
   if (!res.ok) {
     throw new Error(`Failed to fetch ${path}: ${res.status}`);
