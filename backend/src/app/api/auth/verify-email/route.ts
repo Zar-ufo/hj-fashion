@@ -13,7 +13,15 @@ import { generateSecureToken, validateEmail } from '@/lib/auth';
 // Verify email with token
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    let body: any;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid request body' },
+        { status: 400 }
+      );
+    }
     const rawToken = body?.token;
     const token = typeof rawToken === 'string' ? rawToken.trim() : '';
 
@@ -86,7 +94,15 @@ export async function POST(request: Request) {
 // Resend verification email
 export async function PUT(request: Request) {
   try {
-    const body = await request.json();
+    let body: any;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid request body' },
+        { status: 400 }
+      );
+    }
     const rawEmail = body?.email;
     const email = typeof rawEmail === 'string' ? rawEmail.trim().toLowerCase() : '';
 

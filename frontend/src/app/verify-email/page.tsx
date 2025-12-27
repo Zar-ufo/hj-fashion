@@ -32,7 +32,12 @@ function VerifyEmailContent() {
           body: JSON.stringify({ token }),
         });
 
-        const data = await response.json();
+        let data: any = null;
+        try {
+          data = await response.json();
+        } catch {
+          data = null;
+        }
 
         if (response.ok) {
           setIsSuccess(true);
@@ -42,7 +47,7 @@ function VerifyEmailContent() {
             toast.success('Email verified successfully!');
           }
         } else {
-          setError(data.error || 'Failed to verify email');
+          setError((data && data.error) || `Failed to verify email (${response.status})`);
         }
       } catch {
         setError('An unexpected error occurred');
