@@ -2,6 +2,13 @@ import nodemailer from 'nodemailer';
 
 type TransportMode = 'smtp' | 'ethereal';
 
+type ResendEmailPayload = {
+  from: string;
+  to: string | string[];
+  subject: string;
+  html: string;
+};
+
 let cachedTransporterPromise:
   | Promise<{ transporter: nodemailer.Transporter; mode: TransportMode }>
   | null = null;
@@ -117,12 +124,52 @@ const FROM_EMAIL = process.env.FROM_EMAIL || process.env.SMTP_USER || 'noreply@h
 const APP_NAME = 'HJ Fashion';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://hjfashion.vercel.app/';
 
+async function sendViaResend(params: {
+  to: string;
+  subject: string;
+  html: string;
+}) {
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  if (!apiKey) {
+    throw new Error('Missing RESEND_API_KEY (required to send emails via Resend).');
+  }
+
+  const from = (process.env.RESEND_FROM || process.env.FROM_EMAIL || process.env.SMTP_USER || 'onboarding@resend.dev').trim();
+
+  const payload: ResendEmailPayload = {
+    from,
+    to: params.to,
+    subject: params.subject,
+    html: params.html,
+  };
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Resend API error (${res.status}): ${text || res.statusText}`);
+  }
+}
+
 
 async function sendHtmlEmail(params: {
   to: string;
   subject: string;
   html: string;
 }) {
+  // Prefer Resend when configured (avoids SMTP network restrictions/timeouts on some hosts).
+  if (process.env.RESEND_API_KEY?.trim()) {
+    await sendViaResend(params);
+    return;
+  }
+
   const { transporter, mode } = await getTransporter();
 
   const smtpUser = process.env.SMTP_USER?.trim();
@@ -400,6 +447,10 @@ export async function testEmailConfiguration(): Promise<{
   error?: string;
 }> {
   try {
+    if (process.env.RESEND_API_KEY?.trim()) {
+      // Resend has no cheap "verify" call; consider it configured if the key is present.
+      return { success: true };
+    }
     const { transporter } = await getTransporter();
     await transporter.verify();
     return { success: true };
