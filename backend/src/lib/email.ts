@@ -115,7 +115,7 @@ async function getTransporter(): Promise<{ transporter: nodemailer.Transporter; 
 
 const FROM_EMAIL = process.env.FROM_EMAIL || process.env.SMTP_USER || 'noreply@hjfashion.com';
 const APP_NAME = 'HJ Fashion';
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://hjfashion.vercel.app/';
 
 
 async function sendHtmlEmail(params: {
