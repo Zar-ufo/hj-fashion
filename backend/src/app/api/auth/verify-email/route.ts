@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import {
   getEmailVerificationToken,
   markEmailVerificationTokenUsed,
@@ -13,7 +14,8 @@ import { generateSecureToken, validateEmail } from '@/lib/auth';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { token } = body;
+    const rawToken = body?.token;
+    const token = typeof rawToken === 'string' ? rawToken.trim() : '';
 
     if (!token) {
       return NextResponse.json(
@@ -66,6 +68,13 @@ export async function POST(request: Request) {
       message: 'Email verified successfully! You can now access all features.',
     });
   } catch (error) {
+    // Convert common "record not found" errors into a user-friendly 400.
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      return NextResponse.json(
+        { error: 'Invalid verification link' },
+        { status: 400 }
+      );
+    }
     console.error('Error verifying email:', error);
     return NextResponse.json(
       { error: 'Failed to verify email' },
@@ -78,7 +87,8 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { email } = body;
+    const rawEmail = body?.email;
+    const email = typeof rawEmail === 'string' ? rawEmail.trim().toLowerCase() : '';
 
     if (!email || !validateEmail(email)) {
       return NextResponse.json(
