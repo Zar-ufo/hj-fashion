@@ -210,13 +210,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ email }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        return { success: false, error: data.error || 'Failed to send verification email' };
+      const rawText = await response.text();
+      let data: any = null;
+      try {
+        data = rawText ? JSON.parse(rawText) : null;
+      } catch {
+        data = null;
       }
 
-      return { success: true, message: data.message };
+      if (!response.ok) {
+        const messageFromServer = (data && data.error) || rawText;
+        return {
+          success: false,
+          error:
+            (typeof messageFromServer === 'string' && messageFromServer.trim())
+              ? messageFromServer
+              : 'Failed to send verification email',
+        };
+      }
+
+      return { success: true, message: (data && data.message) || rawText };
     } catch (error) {
       console.error('Resend verification error:', error);
       return { success: false, error: 'An unexpected error occurred' };
