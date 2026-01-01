@@ -80,6 +80,13 @@ const mainCategories = [
     image_url: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1000',
     display_order: 9,
   },
+  {
+    name: 'Customized T-shirt',
+    slug: 'customized-tshirt',
+    description: 'Personalized T-shirts with your own design or text.',
+    image_url: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=1000',
+    display_order: 10,
+  },
 ];
 
 // Subcategories for Pakistani Suits

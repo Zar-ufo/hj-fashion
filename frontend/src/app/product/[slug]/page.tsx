@@ -88,6 +88,23 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
             {/* Product Info */}
             <div className="flex flex-col space-y-8">
+              {/* Shareable Link Button */}
+              <div className="flex justify-end mb-2">
+                <button
+                  className="flex items-center gap-2 px-3 py-1.5 border border-black/20 rounded text-xs text-black/60 hover:bg-black/5 transition"
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      navigator.clipboard.writeText(window.location.origin + `/product/${product.slug}`);
+                      alert('Product link copied!');
+                    }
+                  }}
+                  type="button"
+                  title="Copy product link"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 010 5.656m-3.656-3.656a4 4 0 015.656 0m-7.778 7.778a4 4 0 005.656 0l1.414-1.414a4 4 0 000-5.656m-7.778-7.778a4 4 0 015.656 0l1.414 1.414a4 4 0 010 5.656" /></svg>
+                  Share
+                </button>
+              </div>
               <div className="space-y-6 pb-8 border-b border-black/10">
                 <div className="flex justify-between items-start">
                   <div className="space-y-3">
