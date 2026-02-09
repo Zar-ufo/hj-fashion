@@ -7,6 +7,7 @@ import { getFeaturedProducts, getNewArrivals } from '@/lib/mock-data';
 import { QuickAddToCart } from '@/components/QuickAddToCart';
 import { WishlistButton } from '@/components/WishlistButton';
 import { HeroSlider } from '@/components/HeroSlider';
+import { ShopByCategoryCarousel } from '@/components/ShopByCategoryCarousel';
 import {
   Carousel,
   CarouselContent,
@@ -90,57 +91,15 @@ export default async function Home() {
               <p className="text-black/50 max-w-xl mx-auto font-light">Explore our curated collections across all categories of premium Pakistani and Indian fashion.</p>
             </div>
             
-            {/* Bento-style Grid Layout */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
-              {categories?.slice(0, 6).map((category, index) => (
-                <Link 
-                  key={category.id} 
-                  href={`/shop?category=${category.slug}`} 
-                  className={`group relative overflow-hidden border-2 border-black bg-black ${
-                    index === 0 ? 'col-span-2 row-span-2 aspect-square' : 
-                    index === 3 ? 'col-span-2 aspect-[2/1]' : 
-                    'aspect-[3/4]'
-                  }`}
-                >
-                  <img
-                    src={getShopByCategoryImage(category)}
-                    alt={category.name}
-                    className="h-full w-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:opacity-80"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                  
-                  {/* Inner border accent */}
-                  <div className="absolute inset-3 md:inset-4 border border-white/20 pointer-events-none group-hover:border-white/50 transition-all duration-500" />
-                  
-                  {/* Content */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-end p-4 md:p-8 text-center text-white">
-                    <div className="transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                      <h3 className={`font-serif font-light tracking-wide mb-2 ${
-                        index === 0 ? 'text-2xl md:text-4xl' : 
-                        index === 3 ? 'text-xl md:text-3xl' : 
-                        'text-lg md:text-xl'
-                      }`}>
-                        {category.name}
-                      </h3>
-                      <div className="h-[1px] w-0 bg-white mx-auto group-hover:w-16 transition-all duration-500" />
-                      <p className="text-xs uppercase tracking-[0.25em] mt-3 opacity-0 group-hover:opacity-100 transition-all duration-500 delay-100">
-                        Explore
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Corner accents for featured item */}
-                  {index === 0 && (
-                    <>
-                      <div className="absolute top-4 left-4 w-6 h-6 border-l border-t border-white/40 group-hover:w-8 group-hover:h-8 transition-all duration-500" />
-                      <div className="absolute top-4 right-4 w-6 h-6 border-r border-t border-white/40 group-hover:w-8 group-hover:h-8 transition-all duration-500" />
-                      <div className="absolute bottom-20 left-4 w-6 h-6 border-l border-b border-white/40 group-hover:w-8 group-hover:h-8 transition-all duration-500" />
-                      <div className="absolute bottom-20 right-4 w-6 h-6 border-r border-b border-white/40 group-hover:w-8 group-hover:h-8 transition-all duration-500" />
-                    </>
-                  )}
-                </Link>
-              ))}
-            </div>
+            {/* Auto-Sliding Category Carousel */}
+            <ShopByCategoryCarousel
+              categories={(categories || []).slice(0, 6).map((category) => ({
+                id: category.id,
+                name: category.name,
+                slug: category.slug,
+                image: getShopByCategoryImage(category),
+              }))}
+            />
 
             {/* View All Categories Button */}
             <div className="flex justify-center mt-12">

@@ -18,6 +18,12 @@ async function proxyToBackend(
       'Content-Type': 'application/json',
     };
     
+    // Forward cookies so the backend can identify the user session
+    const cookie = request.headers.get('cookie');
+    if (cookie) {
+      headers['Cookie'] = cookie;
+    }
+    
     // Copy auth headers if present
     const authHeader = request.headers.get('Authorization');
     if (authHeader) {
@@ -43,15 +49,23 @@ async function proxyToBackend(
     });
     
     const responseText = await response.text();
-    console.log(`[verify-email proxy] Response: ${response.status} - ${responseText.substring(0, 100)}`);
+    console.log(`[verify-email proxy] Response: ${response.status} - ${responseText.substring(0, 200)}`);
     
-    // Return the response as-is
-    return new NextResponse(responseText, {
+    // Build response, forwarding Set-Cookie headers from backend
+    const proxyRes = new NextResponse(responseText, {
       status: response.status,
       headers: {
         'Content-Type': response.headers.get('Content-Type') || 'application/json',
       },
     });
+
+    // Forward any Set-Cookie headers from the backend
+    const setCookies = response.headers.getSetCookie?.() || [];
+    for (const sc of setCookies) {
+      proxyRes.headers.append('Set-Cookie', sc);
+    }
+
+    return proxyRes;
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : String(err);
     console.error(`[verify-email proxy] Error: ${errorMessage}`);

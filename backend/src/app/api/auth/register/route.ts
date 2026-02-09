@@ -65,11 +65,18 @@ export async function POST(request: Request) {
       expires_at: expiresAt,
     });
 
-    // Send verification email
-    const verificationSent = await sendEmailVerificationEmail(normalizedEmail, verificationToken, first_name);
+    // Send verification email (don't let email failure break registration)
+    let verificationSent = false;
+    try {
+      verificationSent = await sendEmailVerificationEmail(normalizedEmail, verificationToken, first_name);
+    } catch (emailErr) {
+      console.error('Failed to send verification email:', emailErr);
+    }
 
-    // Send welcome email (non-blocking for registration success)
-    await sendWelcomeEmail(normalizedEmail, first_name);
+    // Send welcome email (non-blocking, best-effort)
+    sendWelcomeEmail(normalizedEmail, first_name).catch((err) =>
+      console.error('Failed to send welcome email:', err)
+    );
 
     // Create JWT token
     const token = await createToken({

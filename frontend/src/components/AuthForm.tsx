@@ -43,8 +43,14 @@ export function AuthForm({ type }: { type: 'login' | 'register' }) {
         });
 
         if (result.success) {
-          toast.success('Account created! Please check your email to verify your account.');
+          toast.success('Account created successfully! 🎉', {
+            description: 'A verification email has been sent to your inbox.',
+            duration: 6000,
+          });
+          // Small delay so the user can see the toast before redirect
+          await new Promise(r => setTimeout(r, 500));
           router.push('/account');
+          router.refresh();
         } else {
           toast.error(result.error || 'Registration failed');
         }
@@ -53,7 +59,15 @@ export function AuthForm({ type }: { type: 'login' | 'register' }) {
 
         if (result.success) {
           toast.success('Welcome back!');
-          router.push('/account');
+          // Redirect admin users to admin dashboard
+          if (result.role === 'ADMIN') {
+            router.push('/admin');
+          } else {
+            // Check for redirect param in URL
+            const params = new URLSearchParams(window.location.search);
+            const redirect = params.get('redirect');
+            router.push(redirect || '/account');
+          }
         } else {
           toast.error(result.error || 'Invalid email or password');
         }

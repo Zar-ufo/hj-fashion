@@ -11,6 +11,7 @@ const navItems = [
   { href: '/admin', label: 'Analytics' },
   { href: '/admin/manage', label: 'Manage' },
   { href: '/admin/orders', label: 'Orders' },
+  { href: '/', label: 'View Storefront', external: true },
 ];
 
 export function AdminNavbar() {
@@ -28,9 +29,9 @@ export function AdminNavbar() {
 
           <nav className="hidden items-center gap-1 sm:flex">
             {navItems.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = !('external' in item) && pathname === item.href;
               return (
-                <Link key={item.href} href={item.href}>
+                <Link key={item.href} href={item.href} target={'external' in item ? '_blank' : undefined}>
                   <Button
                     variant={isActive ? 'secondary' : 'ghost'}
                     size="sm"
@@ -62,9 +63,9 @@ export function AdminNavbar() {
 
       <nav className="flex items-center gap-1 px-4 pb-3 sm:hidden">
         {navItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = !('external' in item) && pathname === item.href;
           return (
-            <Link key={item.href} href={item.href} className="flex-1">
+            <Link key={item.href} href={item.href} className="flex-1" target={'external' in item ? '_blank' : undefined}>
               <Button
                 variant={isActive ? 'secondary' : 'ghost'}
                 size="sm"

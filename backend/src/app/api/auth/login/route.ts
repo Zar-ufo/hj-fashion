@@ -3,6 +3,11 @@ import bcrypt from 'bcryptjs';
 import { getUserWithAuthDetails } from '@/lib/db-queries';
 import { createToken, createAuthenticatedResponse, validateEmail } from '@/lib/auth';
 
+// Simple in-memory rate limiter for login attempts
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+const MAX_ATTEMPTS = 5;
+const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();

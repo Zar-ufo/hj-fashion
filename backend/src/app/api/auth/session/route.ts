@@ -35,6 +35,15 @@ export async function GET() {
       ));
     }
 
+    // If user is blocked, log them out immediately
+    if (user.is_blocked) {
+      await removeAuthCookie();
+      return addVersionHeader(NextResponse.json(
+        { authenticated: false, user: null, error: 'Account suspended' },
+        { status: 200 }
+      ));
+    }
+
     return addVersionHeader(NextResponse.json({
       authenticated: true,
       user: {

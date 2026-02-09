@@ -3,8 +3,15 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
+const JWT_SECRET_RAW = process.env.JWT_SECRET;
+if (!JWT_SECRET_RAW || JWT_SECRET_RAW === 'your-secret-key-change-in-production') {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET must be set to a strong, unique value in production.');
+  }
+  console.warn('WARNING: JWT_SECRET is not set. Using an insecure default for development only.');
+}
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key-change-in-production'
+  JWT_SECRET_RAW || 'dev-only-insecure-secret-change-me'
 );
 
 const COOKIE_NAME = 'auth-token';
