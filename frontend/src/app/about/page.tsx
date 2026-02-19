@@ -50,7 +50,7 @@ export default function AboutPage() {
             <div className="relative">
               <div className="aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl">
                 <img 
-                  src="https://images.unsplash.com/photo-1589156280159-27698a70f29b?q=80&w=800" 
+                  src="/pakistani_suits.png" 
                   alt="Craftsmanship" 
                   className="h-full w-full object-cover"
                 />

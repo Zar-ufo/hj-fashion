@@ -1,6 +1,8 @@
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export default function SizeGuidePage() {
   return (
@@ -89,9 +91,11 @@ export default function SizeGuidePage() {
               <p className="text-sm text-stone-500 text-center mb-6 leading-relaxed">
                 Many of our formal and bridal pieces can be custom-tailored to your exact measurements. Contact our styling team for a personalized consultation.
               </p>
-              <button className="w-full h-12 rounded-full bg-stone-900 text-white font-bold hover:bg-stone-800 transition-colors">
-                Request Consultation
-              </button>
+              <Link href="/contact" className="w-full">
+                <Button className="w-full h-12 rounded-full bg-stone-900 text-white font-bold hover:bg-stone-800 transition-colors">
+                  Request Consultation
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
