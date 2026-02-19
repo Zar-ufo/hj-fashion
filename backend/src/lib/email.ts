@@ -124,6 +124,42 @@ const FROM_EMAIL = process.env.FROM_EMAIL || process.env.SMTP_USER || 'noreply@h
 const APP_NAME = 'HJ Fashion';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://hjfashion.vercel.app/';
 
+async function sendViaBrevo(params: {
+  to: string;
+  subject: string;
+  html: string;
+}) {
+  const apiKey = process.env.BREVO_API_KEY?.trim();
+  if (!apiKey) {
+    throw new Error('Missing BREVO_API_KEY (required to send emails via Brevo).');
+  }
+
+  const senderName = (process.env.BREVO_SENDER_NAME || APP_NAME).trim();
+  const senderEmail = (process.env.BREVO_SENDER_EMAIL || process.env.FROM_EMAIL || 'noreply@hjfashion.com').trim();
+
+  const payload = {
+    sender: { name: senderName, email: senderEmail },
+    to: [{ email: params.to }],
+    subject: params.subject,
+    htmlContent: params.html,
+  };
+
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'api-key': apiKey,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Brevo API error (${res.status}): ${text || res.statusText}`);
+  }
+}
+
 async function sendViaResend(params: {
   to: string;
   subject: string;
@@ -164,7 +200,11 @@ async function sendHtmlEmail(params: {
   subject: string;
   html: string;
 }) {
-  // Prefer Resend when configured (avoids SMTP network restrictions/timeouts on some hosts).
+  // Priority: Brevo > Resend > SMTP > Ethereal
+  if (process.env.BREVO_API_KEY?.trim()) {
+    await sendViaBrevo(params);
+    return;
+  }
   if (process.env.RESEND_API_KEY?.trim()) {
     await sendViaResend(params);
     return;
@@ -447,6 +487,10 @@ export async function testEmailConfiguration(): Promise<{
   error?: string;
 }> {
   try {
+    if (process.env.BREVO_API_KEY?.trim()) {
+      // Brevo is configured via API key; consider it ready.
+      return { success: true };
+    }
     if (process.env.RESEND_API_KEY?.trim()) {
       // Resend has no cheap "verify" call; consider it configured if the key is present.
       return { success: true };
