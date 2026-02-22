@@ -51,7 +51,8 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
-    const backendUrl = process.env.BACKEND_URL || 'https://hj-fashion-3.onrender.com';
+    // Use http://localhost:3001 for local backend, or fallback to deployed URL
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
     return [
       {
         // Skip routes that have custom handlers in /api/auth/

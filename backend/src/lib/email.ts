@@ -200,12 +200,14 @@ async function sendHtmlEmail(params: {
   subject: string;
   html: string;
 }) {
-  // Priority: Brevo > Resend > SMTP > Ethereal
-  if (process.env.BREVO_API_KEY?.trim()) {
+  // Priority: (optional) FORCE_SMTP -> Brevo > Resend > SMTP > Ethereal
+  const forceSmtp = (process.env.FORCE_SMTP || '').toString().trim().toLowerCase() === 'true';
+
+  if (!forceSmtp && process.env.BREVO_API_KEY?.trim()) {
     await sendViaBrevo(params);
     return;
   }
-  if (process.env.RESEND_API_KEY?.trim()) {
+  if (!forceSmtp && process.env.RESEND_API_KEY?.trim()) {
     await sendViaResend(params);
     return;
   }
