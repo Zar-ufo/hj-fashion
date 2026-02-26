@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
 const JWT_SECRET_RAW = process.env.JWT_SECRET;
-if (!JWT_SECRET_RAW || JWT_SECRET_RAW === 'your-secret-key-change-in-production') {
+if (!JWT_SECRET_RAW || JWT_SECRET_RAW === 'baba0ba33358889d325c18c41cfee4c9') {
   if (process.env.NODE_ENV === 'production') {
     throw new Error('JWT_SECRET must be set to a strong, unique value in production.');
   }

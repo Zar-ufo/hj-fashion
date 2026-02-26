@@ -122,7 +122,10 @@ async function getTransporter(): Promise<{ transporter: nodemailer.Transporter; 
 
 const FROM_EMAIL = process.env.FROM_EMAIL || process.env.SMTP_USER || 'noreply@hjfashion.com';
 const APP_NAME = 'HJ Fashion';
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://hjfashion.vercel.app/';
+// The public frontend URL is used to build links inside email templates. In production
+// this should be provided via NEXT_PUBLIC_APP_URL (e.g. "https://h-jfasion.vercel.app").
+// The hard‑coded fallback is only for local development / quick demos.
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://h-jfasion.vercel.app';
 
 async function sendViaBrevo(params: {
   to: string;

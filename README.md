@@ -43,3 +43,9 @@ This repo intentionally ignores real env files (like `.env`, `.env.local`) so se
 	- `frontend/.env.example` → `frontend/.env.local`
 
 For production, set env vars in your hosting provider dashboards (Render for backend, Vercel for frontend) rather than committing them to GitHub.
+
+#### Example production configuration
+- **Backend deployment**: https://h-jfashion0.vercel.app (set `DATABASE_URL`, `JWT_SECRET`, `SMTP_*`, `NEXT_PUBLIC_APP_URL="https://h-jfasion.vercel.app"`, etc.)
+- **Frontend deployment**: https://h-jfasion.vercel.app (set `BACKEND_URL="https://h-jfashion0.vercel.app"` and any public keys).
+
+Email templates and reset/verify links are built using `NEXT_PUBLIC_APP_URL` on the backend, so ensure it points at the frontend site.
