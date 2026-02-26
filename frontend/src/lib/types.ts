@@ -19,6 +19,9 @@ export interface Product {
   price: number;
   original_price: number | null;
   images: string[];
+  // Optional convenience fields used by some UI components
+  image?: string;
+  stock?: number;
   is_featured: boolean;
   ratings: number;
   sizes: string[];

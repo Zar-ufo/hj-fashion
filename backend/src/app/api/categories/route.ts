@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCategories, getAllCategories, getOccasionCategories } from '@/lib/db-queries';
 
-export async function GET(request: NextRequest) {
+export async function GET(request: any) {
   try {
     const { searchParams } = new URL(request.url);
     const all = searchParams.get('all') === 'true';

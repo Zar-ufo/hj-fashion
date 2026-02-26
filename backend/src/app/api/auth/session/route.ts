@@ -6,7 +6,7 @@ import { getUserById } from '@/lib/db-queries';
 const SERVER_VERSION = Date.now().toString();
 
 // Helper to add version header to response
-function addVersionHeader(response: NextResponse) {
+function addVersionHeader(response: any) {
   response.headers.set('x-server-version', SERVER_VERSION);
   return response;
 }

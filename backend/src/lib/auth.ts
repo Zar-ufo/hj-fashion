@@ -85,7 +85,7 @@ export async function getCurrentUser(): Promise<JWTPayload | null> {
 }
 
 // Middleware helper to verify auth
-export async function verifyAuth(request: NextRequest): Promise<{
+export async function verifyAuth(request: any): Promise<{
   isAuthenticated: boolean;
   user: JWTPayload | null;
 }> {
@@ -105,7 +105,7 @@ export function createAuthenticatedResponse(
   token: string,
   rememberMe: boolean = false,
   status = 200
-): NextResponse {
+) {
   const response = NextResponse.json(data, { status });
   const maxAge = rememberMe ? REMEMBER_ME_DURATION / 1000 : SESSION_DURATION / 1000;
   
@@ -121,7 +121,7 @@ export function createAuthenticatedResponse(
 }
 
 // Create logout response
-export function createLogoutResponse(): NextResponse {
+export function createLogoutResponse() {
   const response = NextResponse.json({ message: 'Logged out successfully' });
   
   response.cookies.delete(COOKIE_NAME);

@@ -137,16 +137,20 @@ export default async function Home() {
                 />
                 <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors" />
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
-                  <span className="text-white/80 text-xs md:text-sm uppercase tracking-[0.3em] mb-3 border border-white/30 px-4 py-1.5">
-                    {occasion.subtitle}
-                  </span>
+                  {occasion.subtitle && (
+                    <span className="text-white/80 text-xs md:text-sm uppercase tracking-[0.3em] mb-3 border border-white/30 px-4 py-1.5">
+                      {occasion.subtitle}
+                    </span>
+                  )}
                   <h3 className="text-white text-3xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 tracking-wide">
                     {occasion.name}
                   </h3>
                   <div className="h-[1px] w-24 bg-white mb-6" />
-                  <span className="text-white text-sm md:text-base uppercase tracking-[0.2em] border-b border-white pb-1 group-hover:pb-2 transition-all">
-                    {occasion.countdown}
-                  </span>
+                  {occasion.countdown && (
+                    <span className="text-white text-sm md:text-base uppercase tracking-[0.2em] border-b border-white pb-1 group-hover:pb-2 transition-all">
+                      {occasion.countdown}
+                    </span>
+                  )}
                 </div>
                 {/* Corner accents */}
                 <div className="absolute top-4 left-4 w-8 h-8 border-l-2 border-t-2 border-white/50" />

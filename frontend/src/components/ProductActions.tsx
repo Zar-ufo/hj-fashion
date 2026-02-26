@@ -14,7 +14,7 @@ interface ProductActionsProps {
     price: number;
     images: string[];
     sizes: string[];
-    stock: number;
+    stock?: number;
   };
 }
 

@@ -11,7 +11,7 @@ interface WishlistButtonProps {
     name: string;
     slug?: string;
     price: number;
-    image: string;
+    image?: string;
   };
   className?: string;
 }
