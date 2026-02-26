@@ -12,7 +12,7 @@ interface QuickAddToCartProps {
     name: string;
     slug?: string;
     price: number;
-    image: string;
+    image?: string;
     size?: string;
   };
   className?: string;
