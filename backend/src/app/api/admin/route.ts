@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAdmin } from '@/lib/admin';
 import { getDashboardStats, getAllOrders } from '@/lib/db-queries';
 
 export const dynamic = 'force-dynamic';
@@ -7,9 +7,9 @@ export const revalidate = 0;
 
 export async function GET(request: Request) {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { user: currentUser, error } = await requireAdmin(request);
+    if (error) {
+      return error;
     }
 
     const { searchParams } = new URL(request.url);
