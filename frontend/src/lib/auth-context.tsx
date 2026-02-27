@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const response = await fetch('/api/auth/session', {
         credentials: 'include',
       });
-      
+
       // Check for server version changes (backend restart detection)
       // Only enable in production to avoid dev mode reload loops
       if (process.env.NODE_ENV === 'production') {
@@ -67,10 +67,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
       }
-      
-      const data = await response.json();
 
-      if (data.authenticated && data.user) {
+      const rawText = await response.text();
+      let data: any = null;
+      try {
+        data = rawText ? JSON.parse(rawText) : null;
+      } catch {
+        console.error('Failed to parse session response as JSON:', rawText.slice(0, 120));
+        setUser(null);
+        return;
+      }
+
+      if (!response.ok) {
+        setUser(null);
+        return;
+      }
+
+      if (data?.authenticated && data.user) {
         setUser(data.user);
       } else {
         setUser(null);
