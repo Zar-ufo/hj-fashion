@@ -20,7 +20,7 @@ export const dynamic = 'force-dynamic';
 
 async function fetchApi<T>(path: string): Promise<T> {
   // in production the BACKEND_URL env var should be defined (see frontend/.env.example)
-  const backendUrl = process.env.BACKEND_URL || 'https://h-jfashion0.vercel.app';
+  const backendUrl = process.env.BACKEND_URL || 'https://hj-fashion0.vercel.app';
   const res = await fetch(`${backendUrl}${path}`, { cache: 'no-store' });
   if (!res.ok) {
     throw new Error(`Failed to fetch ${path}: ${res.status}`);

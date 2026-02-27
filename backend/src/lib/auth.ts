@@ -3,16 +3,29 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
-const JWT_SECRET_RAW = process.env.JWT_SECRET;
-if (!JWT_SECRET_RAW || JWT_SECRET_RAW === 'baba0ba33358889d325c18c41cfee4c9') {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('JWT_SECRET must be set to a strong, unique value in production.');
+const INSECURE_DEFAULT_SECRET = 'dev-only-insecure-secret-change-me';
+const FORBIDDEN_PRODUCTION_SECRET = 'baba0ba33358889d325c18c41cfee4c9';
+
+let warnedInsecureSecret = false;
+
+function getJwtSecret(): Uint8Array {
+  const raw = process.env.JWT_SECRET;
+
+  if (!raw || raw === FORBIDDEN_PRODUCTION_SECRET) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('JWT_SECRET must be set to a strong, unique value in production.');
+    }
+
+    if (!warnedInsecureSecret) {
+      console.warn('WARNING: JWT_SECRET is not set. Using an insecure default for development only.');
+      warnedInsecureSecret = true;
+    }
+
+    return new TextEncoder().encode(INSECURE_DEFAULT_SECRET);
   }
-  console.warn('WARNING: JWT_SECRET is not set. Using an insecure default for development only.');
+
+  return new TextEncoder().encode(raw);
 }
-const JWT_SECRET = new TextEncoder().encode(
-  JWT_SECRET_RAW || 'dev-only-insecure-secret-change-me'
-);
 
 const COOKIE_NAME = 'auth-token';
 const SESSION_DURATION = 24 * 60 * 60 * 1000; // 1 day (default)
@@ -38,13 +51,13 @@ export async function createToken(payload: Omit<JWTPayload, 'exp'>, rememberMe: 
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(expirationTime)
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
 }
 
 // Verify and decode a JWT token
 export async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, getJwtSecret());
     return payload as unknown as JWTPayload;
   } catch {
     return null;
@@ -90,7 +103,7 @@ export async function verifyAuth(request: any): Promise<{
   user: JWTPayload | null;
 }> {
   const token = request.cookies.get(COOKIE_NAME)?.value;
-  
+
   if (!token) {
     return { isAuthenticated: false, user: null };
   }
@@ -108,7 +121,7 @@ export function createAuthenticatedResponse(
 ) {
   const response = NextResponse.json(data, { status });
   const maxAge = rememberMe ? REMEMBER_ME_DURATION / 1000 : SESSION_DURATION / 1000;
-  
+
   response.cookies.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -123,16 +136,16 @@ export function createAuthenticatedResponse(
 // Create logout response
 export function createLogoutResponse() {
   const response = NextResponse.json({ message: 'Logged out successfully' });
-  
+
   response.cookies.delete(COOKIE_NAME);
-  
+
   return response;
 }
 
 // Password validation
 export function validatePassword(password: string): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
-  
+
   if (password.length < 8) {
     errors.push('Password must be at least 8 characters long');
   }
