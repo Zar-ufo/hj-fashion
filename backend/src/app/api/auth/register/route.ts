@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { createUser, getUserByEmail, createEmailVerificationToken } from '@/lib/db-queries';
-import { createToken, createAuthenticatedResponse, validatePassword, validateEmail, generateSecureToken } from '@/lib/auth';
+import { isDatabaseConfigurationError } from '@/lib/db';
+import { createToken, createAuthenticatedResponse, validatePassword, validateEmail, generateSecureToken, isAuthConfigurationError } from '@/lib/auth';
 import { sendEmailVerificationEmail, sendWelcomeEmail } from '@/lib/email';
 
 export async function POST(request: Request) {
@@ -101,9 +102,25 @@ export async function POST(request: Request) {
       201
     );
   } catch (error) {
+    if (isAuthConfigurationError(error)) {
+      console.error('Auth configuration error during registration:', error.message);
+      return NextResponse.json(
+        { error: 'Authentication is temporarily unavailable. Please contact support.' },
+        { status: 503 }
+      );
+    }
+
+    if (isDatabaseConfigurationError(error)) {
+      console.error('Database configuration error during registration:', error.message);
+      return NextResponse.json(
+        { error: 'Database is temporarily unavailable. Please contact support.' },
+        { status: 503 }
+      );
+    }
+
     console.error('Error registering user:', error);
     return NextResponse.json(
-      { error: 'Failed to register user' },
+      { error: 'Failed to create account' },
       { status: 500 }
     );
   }
