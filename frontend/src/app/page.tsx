@@ -18,21 +18,28 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-async function fetchApi<T>(path: string): Promise<T> {
+async function fetchApi<T>(path: string, fallback: T): Promise<T> {
   // in production the BACKEND_URL env var should be defined (see frontend/.env.example)
-  const backendUrl = process.env.BACKEND_URL || 'https://h-jfashion0.vercel.app';
-  const res = await fetch(`${backendUrl}${path}`, { cache: 'no-store' });
-  if (!res.ok) {
-    throw new Error(`Failed to fetch ${path}: ${res.status}`);
+  const backendUrl = process.env.BACKEND_URL || 'https://hj-fashion0.vercel.app';
+
+  try {
+    const res = await fetch(`${backendUrl}${path}`, { cache: 'no-store' });
+    if (!res.ok) {
+      console.error(`Failed to fetch ${path}: ${res.status}`);
+      return fallback;
+    }
+    return (await res.json()) as T;
+  } catch (error) {
+    console.error(`Failed to fetch ${path}:`, error);
+    return fallback;
   }
-  return res.json() as Promise<T>;
 }
 
 export default async function Home() {
   // Fetch data from backend API (frontend is DB-free)
-  const categories = await fetchApi<any[]>('/api/categories');
-  const occasionCategories = await fetchApi<any[]>('/api/categories?occasion=true');
-  const featuredEvent = await fetchApi<any | null>('/api/events/featured');
+  const categories = await fetchApi<any[]>('/api/categories', []);
+  const occasionCategories = await fetchApi<any[]>('/api/categories?occasion=true', []);
+  const featuredEvent = await fetchApi<any | null>('/api/events/featured', null);
 
   const getShopByCategoryImage = (category: { slug: string; image_url?: string | null }) => {
     if (category.slug === 'shoes') return '/shoes.jpeg';
