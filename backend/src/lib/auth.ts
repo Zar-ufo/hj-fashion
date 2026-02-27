@@ -8,12 +8,24 @@ const FORBIDDEN_PRODUCTION_SECRET = 'baba0ba33358889d325c18c41cfee4c9';
 
 let warnedInsecureSecret = false;
 
+class AuthConfigurationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AuthConfigurationError';
+  }
+}
+
+export function isAuthConfigurationError(error: unknown): error is AuthConfigurationError {
+  return error instanceof AuthConfigurationError;
+}
+
 function getJwtSecret(): Uint8Array {
   const raw = process.env.JWT_SECRET;
   const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
 
   if (!raw || raw === FORBIDDEN_PRODUCTION_SECRET) {
     if (process.env.NODE_ENV === 'production' && !isBuildPhase) {
+      throw new AuthConfigurationError('JWT_SECRET must be set to a strong, unique value in production.');
       throw new Error('JWT_SECRET must be set to a strong, unique value in production.');
     }
 
@@ -24,6 +36,34 @@ function getJwtSecret(): Uint8Array {
     }
 
     return new TextEncoder().encode(INSECURE_DEFAULT_SECRET);
+  }
+
+  return new TextEncoder().encode(raw);
+}
+
+
+function getCookieValueFromHeader(cookieHeader: string | null, name: string): string | null {
+  if (!cookieHeader) return null;
+
+  for (const item of cookieHeader.split(';')) {
+    const [rawName, ...rawValue] = item.trim().split('=');
+    if (rawName === name) {
+      return decodeURIComponent(rawValue.join('='));
+    }
+  }
+
+  return null;
+}
+
+export function getBearerTokenFromHeader(authHeader: string | null): string | null {
+  if (!authHeader) return null;
+
+  const [scheme, token] = authHeader.split(' ');
+  if (scheme?.toLowerCase() !== 'bearer' || !token) {
+    return null;
+  }
+
+  return token.trim();
   }
 
   return new TextEncoder().encode(raw);
@@ -92,8 +132,20 @@ export async function removeAuthCookie(): Promise<void> {
   cookieStore.delete(COOKIE_NAME);
 }
 
-// Get current user from session
-export async function getCurrentUser(): Promise<JWTPayload | null> {
+// Get current user from session or Authorization header
+export async function getCurrentUser(request?: Request | NextRequest): Promise<JWTPayload | null> {
+  if (request) {
+    const bearerToken = getBearerTokenFromHeader(request.headers.get('authorization'));
+    if (bearerToken) {
+      return verifyToken(bearerToken);
+    }
+
+    const cookieToken = getCookieValueFromHeader(request.headers.get('cookie'), COOKIE_NAME);
+    if (cookieToken) {
+      return verifyToken(cookieToken);
+    }
+  }
+
   const token = await getAuthCookie();
   if (!token) return null;
   return verifyToken(token);
