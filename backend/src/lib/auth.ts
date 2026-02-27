@@ -29,6 +29,31 @@ function getJwtSecret(): Uint8Array {
   return new TextEncoder().encode(raw);
 }
 
+
+function getCookieValueFromHeader(cookieHeader: string | null, name: string): string | null {
+  if (!cookieHeader) return null;
+
+  for (const item of cookieHeader.split(';')) {
+    const [rawName, ...rawValue] = item.trim().split('=');
+    if (rawName === name) {
+      return decodeURIComponent(rawValue.join('='));
+    }
+  }
+
+  return null;
+}
+
+export function getBearerTokenFromHeader(authHeader: string | null): string | null {
+  if (!authHeader) return null;
+
+  const [scheme, token] = authHeader.split(' ');
+  if (scheme?.toLowerCase() !== 'bearer' || !token) {
+    return null;
+  }
+
+  return token.trim();
+}
+
 const COOKIE_NAME = 'auth-token';
 const SESSION_DURATION = 24 * 60 * 60 * 1000; // 1 day (default)
 const REMEMBER_ME_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days (remember me)
@@ -92,8 +117,20 @@ export async function removeAuthCookie(): Promise<void> {
   cookieStore.delete(COOKIE_NAME);
 }
 
-// Get current user from session
-export async function getCurrentUser(): Promise<JWTPayload | null> {
+// Get current user from session or Authorization header
+export async function getCurrentUser(request?: Request | NextRequest): Promise<JWTPayload | null> {
+  if (request) {
+    const bearerToken = getBearerTokenFromHeader(request.headers.get('authorization'));
+    if (bearerToken) {
+      return verifyToken(bearerToken);
+    }
+
+    const cookieToken = getCookieValueFromHeader(request.headers.get('cookie'), COOKIE_NAME);
+    if (cookieToken) {
+      return verifyToken(cookieToken);
+    }
+  }
+
   const token = await getAuthCookie();
   if (!token) return null;
   return verifyToken(token);

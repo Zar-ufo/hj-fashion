@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAdmin } from '@/lib/admin';
 import { createEvent, getAllEvents, updateEvent, deleteEvent } from '@/lib/db-queries';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 // GET all events
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { user: currentUser, error } = await requireAdmin(request);
+    if (error) {
+      return error;
     }
 
     const events = await getAllEvents();
@@ -24,9 +24,9 @@ export async function GET() {
 // POST create new event
 export async function POST(request: Request) {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { user: currentUser, error } = await requireAdmin(request);
+    if (error) {
+      return error;
     }
 
     const body = await request.json();
@@ -58,9 +58,9 @@ export async function POST(request: Request) {
 // PATCH update event
 export async function PATCH(request: Request) {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { user: currentUser, error } = await requireAdmin(request);
+    if (error) {
+      return error;
     }
 
     const body = await request.json();
@@ -88,9 +88,9 @@ export async function PATCH(request: Request) {
 // DELETE event
 export async function DELETE(request: Request) {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { user: currentUser, error } = await requireAdmin(request);
+    if (error) {
+      return error;
     }
 
     const { searchParams } = new URL(request.url);
