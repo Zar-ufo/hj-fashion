@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 60; // Maximum timeout for Vercel hobby plan
 
 // backend url for proxying requests; overridden by BACKEND_URL env var in prod
-const BACKEND_URL = process.env.BACKEND_URL || 'https://h-jfashion0.vercel.app';
+const BACKEND_URL = process.env.BACKEND_URL || 'https://hj-fashion0.vercel.app';
 
 async function proxyToBackend(
   request: NextRequest,
