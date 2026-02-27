@@ -11,7 +11,14 @@ const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== 'object') {
+      return NextResponse.json(
+        { error: 'Invalid request body' },
+        { status: 400 }
+      );
+    }
+
     const { email, password, rememberMe = false } = body;
     const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
 
