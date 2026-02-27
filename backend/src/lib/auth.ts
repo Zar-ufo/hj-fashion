@@ -31,6 +31,16 @@ function getJwtSecret(): Uint8Array {
   if (!rawSecret || rawSecret === FORBIDDEN_PRODUCTION_SECRET) {
     if (process.env.NODE_ENV === 'production' && !isBuildPhase) {
       throw new AuthConfigurationError('JWT_SECRET must be set to a strong, unique value in production.');
+
+let warnedInsecureSecret = false;
+
+function getJwtSecret(): Uint8Array {
+  const raw = process.env.JWT_SECRET;
+  const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
+
+  if (!raw || raw === FORBIDDEN_PRODUCTION_SECRET) {
+    if (process.env.NODE_ENV === 'production' && !isBuildPhase) {
+      throw new Error('JWT_SECRET must be set to a strong, unique value in production.');
     }
 
     if (!warnedInsecureSecret) {
@@ -67,6 +77,10 @@ export function getBearerTokenFromHeader(authHeader: string | null): string | nu
   }
 
   return token.trim();
+    return new TextEncoder().encode(INSECURE_DEFAULT_SECRET);
+  }
+
+  return new TextEncoder().encode(raw);
 }
 
 const COOKIE_NAME = 'auth-token';
