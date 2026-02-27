@@ -10,14 +10,16 @@ let warnedInsecureSecret = false;
 
 function getJwtSecret(): Uint8Array {
   const raw = process.env.JWT_SECRET;
+  const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
 
   if (!raw || raw === FORBIDDEN_PRODUCTION_SECRET) {
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === 'production' && !isBuildPhase) {
       throw new Error('JWT_SECRET must be set to a strong, unique value in production.');
     }
 
     if (!warnedInsecureSecret) {
-      console.warn('WARNING: JWT_SECRET is not set. Using an insecure default for development only.');
+      const mode = isBuildPhase ? 'build' : 'development';
+      console.warn(`WARNING: JWT_SECRET is not set. Using an insecure fallback during ${mode} only.`);
       warnedInsecureSecret = true;
     }
 
