@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { getUserWithAuthDetails } from '@/lib/db-queries';
-import { createToken, createAuthenticatedResponse, validateEmail } from '@/lib/auth';
+import { isDatabaseConfigurationError } from '@/lib/db';
+import { createToken, createAuthenticatedResponse, validateEmail, isAuthConfigurationError } from '@/lib/auth';
 
 // Simple in-memory rate limiter for login attempts
 const loginAttempts = new Map<string, { count: number; resetAt: number }>();
@@ -67,6 +68,22 @@ export async function POST(request: Request) {
       rememberMe
     );
   } catch (error) {
+    if (isAuthConfigurationError(error)) {
+      console.error('Auth configuration error during login:', error.message);
+      return NextResponse.json(
+        { error: 'Authentication is temporarily unavailable. Please contact support.' },
+        { status: 503 }
+      );
+    }
+
+    if (isDatabaseConfigurationError(error)) {
+      console.error('Database configuration error during login:', error.message);
+      return NextResponse.json(
+        { error: 'Database is temporarily unavailable. Please contact support.' },
+        { status: 503 }
+      );
+    }
+
     console.error('Error logging in:', error);
     return NextResponse.json(
       { error: 'Failed to log in' },
