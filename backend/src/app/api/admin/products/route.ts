@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAdmin } from '@/lib/admin';
 import { getProducts, createProduct, updateProduct, deleteProduct, getAllCategories } from '@/lib/db-queries';
 
 // GET all products with categories
 export async function GET(request: Request) {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { user: currentUser, error } = await requireAdmin(request);
+    if (error) {
+      return error;
     }
 
     const { searchParams } = new URL(request.url);
@@ -29,9 +29,9 @@ export async function GET(request: Request) {
 // POST create new product
 export async function POST(request: Request) {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { user: currentUser, error } = await requireAdmin(request);
+    if (error) {
+      return error;
     }
 
     const body = await request.json();
@@ -66,9 +66,9 @@ export async function POST(request: Request) {
 // PATCH update product
 export async function PATCH(request: Request) {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { user: currentUser, error } = await requireAdmin(request);
+    if (error) {
+      return error;
     }
 
     const body = await request.json();
@@ -93,9 +93,9 @@ export async function PATCH(request: Request) {
 // DELETE product
 export async function DELETE(request: Request) {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { user: currentUser, error } = await requireAdmin(request);
+    if (error) {
+      return error;
     }
 
     const { searchParams } = new URL(request.url);

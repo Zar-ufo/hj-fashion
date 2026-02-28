@@ -50,17 +50,6 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  async rewrites() {
-    // Use http://localhost:3001 for local backend, or fallback to deployed URL
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
-    return [
-      {
-        // Skip routes that have custom handlers in /api/auth/
-        source: '/api/:path((?!auth/verify-email).*)',
-        destination: `${backendUrl}/api/:path*`,
-      },
-    ];
-  },
 };
 
 export default nextConfig;
