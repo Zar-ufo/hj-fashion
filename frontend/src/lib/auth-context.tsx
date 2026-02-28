@@ -133,12 +133,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!response.ok) {
         const messageFromServer = (data && data.error) || rawText;
+        const fallbackMessage = response.status === 503
+          ? 'Backend is not fully configured (set JWT_SECRET and DATABASE_URL on backend).'
+          : 'Login failed';
         return {
           success: false,
           error:
             (typeof messageFromServer === 'string' && messageFromServer.trim())
               ? messageFromServer
-              : 'Login failed',
+              : fallbackMessage,
         };
       }
 
@@ -159,10 +162,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify(registerData),
       });
 
-      const data = await response.json();
+      const rawText = await response.text();
+      let data: any = null;
+      try {
+        data = rawText ? JSON.parse(rawText) : null;
+      } catch {
+        data = null;
+      }
 
       if (!response.ok) {
-        return { success: false, error: data.error || 'Registration failed' };
+        const messageFromServer = (data && data.error) || rawText;
+        const fallbackMessage = response.status === 503
+          ? 'Backend is not fully configured (set JWT_SECRET and DATABASE_URL on backend).'
+          : 'Registration failed';
+        return {
+          success: false,
+          error:
+            (typeof messageFromServer === 'string' && messageFromServer.trim())
+              ? messageFromServer
+              : fallbackMessage,
+        };
       }
 
       setUser(data.user);
