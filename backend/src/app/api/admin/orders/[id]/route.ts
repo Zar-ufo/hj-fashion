@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { getCurrentUser } from '@/lib/auth';
+import { requireAdmin } from '@/lib/admin';
 import { getOrderById, updateOrderStatus } from '@/lib/db-queries';
 
 export const dynamic = 'force-dynamic';
@@ -11,13 +11,13 @@ const ALLOWED_STATUSES = ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELI
 type AllowedStatus = (typeof ALLOWED_STATUSES)[number];
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { user: currentUser, error } = await requireAdmin(request);
+    if (error) {
+      return error;
     }
 
     const { id } = await params;
@@ -43,9 +43,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { user: currentUser, error } = await requireAdmin(request);
+    if (error) {
+      return error;
     }
 
     const { id } = await params;

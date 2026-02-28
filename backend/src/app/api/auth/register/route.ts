@@ -1,17 +1,25 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { createUser, getUserByEmail, createEmailVerificationToken } from '@/lib/db-queries';
-import { createToken, createAuthenticatedResponse, validatePassword, validateEmail, generateSecureToken } from '@/lib/auth';
+import { isDatabaseConfigurationError } from '@/lib/db';
+import { createToken, createAuthenticatedResponse, validatePassword, validateEmail, generateSecureToken, isAuthConfigurationError } from '@/lib/auth';
 import { sendEmailVerificationEmail, sendWelcomeEmail } from '@/lib/email';
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== 'object') {
+      return NextResponse.json(
+        { error: 'Invalid request body' },
+        { status: 400 }
+      );
+    }
+
     const { email, password, first_name, last_name } = body;
     const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
 
     // Validate required fields
-    if (!normalizedEmail || !password) {
+    if (!normalizedEmail || typeof password !== 'string' || password.length === 0) {
       return NextResponse.json(
         { error: 'Email and password are required' },
         { status: 400 }
@@ -101,9 +109,33 @@ export async function POST(request: Request) {
       201
     );
   } catch (error) {
+    if (isAuthConfigurationError(error)) {
+      console.error('Auth configuration error during registration:', error.message);
+      return NextResponse.json(
+        {
+          error: 'Authentication service is misconfigured. Set JWT_SECRET in backend environment variables.',
+          code: 'AUTH_CONFIG_ERROR',
+          missingEnv: ['JWT_SECRET'],
+        },
+        { status: 503 }
+      );
+    }
+
+    if (isDatabaseConfigurationError(error)) {
+      console.error('Database configuration error during registration:', error.message);
+      return NextResponse.json(
+        {
+          error: 'Database service is misconfigured. Set DATABASE_URL in backend environment variables.',
+          code: 'DB_CONFIG_ERROR',
+          missingEnv: ['DATABASE_URL'],
+        },
+        { status: 503 }
+      );
+    }
+
     console.error('Error registering user:', error);
     return NextResponse.json(
-      { error: 'Failed to register user' },
+      { error: 'Failed to create account' },
       { status: 500 }
     );
   }
