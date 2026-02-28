@@ -2,6 +2,17 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 
+export class DatabaseConfigurationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'DatabaseConfigurationError';
+  }
+}
+
+export function isDatabaseConfigurationError(error: unknown): error is DatabaseConfigurationError {
+  return error instanceof DatabaseConfigurationError;
+}
+
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
   pool: Pool | undefined;
@@ -10,7 +21,7 @@ const globalForPrisma = globalThis as unknown as {
 function getDatabaseUrl(): string {
   const url = process.env.DATABASE_URL;
   if (!url) {
-    throw new Error(
+    throw new DatabaseConfigurationError(
       'DATABASE_URL is not set. Set it in your environment (e.g. .env.local) before using Prisma.'
     );
   }
