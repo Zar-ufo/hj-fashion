@@ -34,13 +34,28 @@ function getJwtSecret(): Uint8Array {
 
 let warnedInsecureSecret = false;
 
+export class AuthConfigurationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AuthConfigurationError';
+  }
+}
+
+export function isAuthConfigurationError(error: unknown): error is AuthConfigurationError {
+  return error instanceof AuthConfigurationError;
+}
+
+function encodeSecret(secret: string): Uint8Array {
+  return textEncoder.encode(secret);
+}
+
 function getJwtSecret(): Uint8Array {
-  const raw = process.env.JWT_SECRET;
+  const rawSecret = process.env.JWT_SECRET;
   const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
 
-  if (!raw || raw === FORBIDDEN_PRODUCTION_SECRET) {
+  if (!rawSecret || rawSecret === FORBIDDEN_PRODUCTION_SECRET) {
     if (process.env.NODE_ENV === 'production' && !isBuildPhase) {
-      throw new Error('JWT_SECRET must be set to a strong, unique value in production.');
+      throw new AuthConfigurationError('JWT_SECRET must be set to a strong, unique value in production.');
     }
 
     if (!warnedInsecureSecret) {
@@ -80,7 +95,7 @@ export function getBearerTokenFromHeader(authHeader: string | null): string | nu
     return new TextEncoder().encode(INSECURE_DEFAULT_SECRET);
   }
 
-  return new TextEncoder().encode(raw);
+  return token.trim();
 }
 
 const COOKIE_NAME = 'auth-token';

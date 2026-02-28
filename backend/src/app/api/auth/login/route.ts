@@ -22,13 +22,15 @@ export async function POST(request: Request) {
     const { email, password, rememberMe = false } = body;
     const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
 
-    // Validate required fields
-    if (!normalizedEmail || !password) {
+    // Validate required fields and types
+    if (!normalizedEmail || typeof password !== 'string' || password.length === 0) {
       return NextResponse.json(
         { error: 'Email and password are required' },
         { status: 400 }
       );
     }
+
+    const rememberSession = Boolean(rememberMe);
 
     // Validate email format
     if (!validateEmail(normalizedEmail)) {
@@ -61,7 +63,7 @@ export async function POST(request: Request) {
       userId: user.id,
       email: user.email,
       role: user.role,
-    }, rememberMe);
+    }, rememberSession);
 
     // Return user without password hash with auth cookie
     const { password_hash: _, ...userWithoutPassword } = user;
@@ -72,7 +74,7 @@ export async function POST(request: Request) {
         user: userWithoutPassword,
       },
       token,
-      rememberMe
+      rememberSession
     );
   } catch (error) {
     if (isAuthConfigurationError(error)) {
