@@ -31,6 +31,31 @@ function getJwtSecret(): Uint8Array {
   if (!rawSecret || rawSecret === FORBIDDEN_PRODUCTION_SECRET) {
     if (process.env.NODE_ENV === 'production' && !isBuildPhase) {
       throw new AuthConfigurationError('JWT_SECRET must be set to a strong, unique value in production.');
+
+let warnedInsecureSecret = false;
+
+export class AuthConfigurationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AuthConfigurationError';
+  }
+}
+
+export function isAuthConfigurationError(error: unknown): error is AuthConfigurationError {
+  return error instanceof AuthConfigurationError;
+}
+
+function encodeSecret(secret: string): Uint8Array {
+  return textEncoder.encode(secret);
+}
+
+function getJwtSecret(): Uint8Array {
+  const rawSecret = process.env.JWT_SECRET;
+  const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
+
+  if (!rawSecret || rawSecret === FORBIDDEN_PRODUCTION_SECRET) {
+    if (process.env.NODE_ENV === 'production' && !isBuildPhase) {
+      throw new AuthConfigurationError('JWT_SECRET must be set to a strong, unique value in production.');
     }
 
     if (!warnedInsecureSecret) {
@@ -64,6 +89,10 @@ export function getBearerTokenFromHeader(authHeader: string | null): string | nu
   const [scheme, token] = authHeader.split(' ');
   if (scheme?.toLowerCase() !== 'bearer' || !token) {
     return null;
+  }
+
+  return token.trim();
+    return new TextEncoder().encode(INSECURE_DEFAULT_SECRET);
   }
 
   return token.trim();
