@@ -7,12 +7,19 @@ import { sendEmailVerificationEmail, sendWelcomeEmail } from '@/lib/email';
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== 'object') {
+      return NextResponse.json(
+        { error: 'Invalid request body' },
+        { status: 400 }
+      );
+    }
+
     const { email, password, first_name, last_name } = body;
     const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
 
     // Validate required fields
-    if (!normalizedEmail || !password) {
+    if (!normalizedEmail || typeof password !== 'string' || password.length === 0) {
       return NextResponse.json(
         { error: 'Email and password are required' },
         { status: 400 }

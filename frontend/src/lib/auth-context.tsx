@@ -123,14 +123,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ email, password, rememberMe }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        return { success: false, error: data.error || 'Login failed' };
+      const rawText = await response.text();
+      let data: any = null;
+      try {
+        data = rawText ? JSON.parse(rawText) : null;
+      } catch {
+        data = null;
       }
 
-      setUser(data.user);
-      return { success: true, role: data.user?.role };
+      if (!response.ok) {
+        const messageFromServer = (data && data.error) || rawText;
+        return {
+          success: false,
+          error:
+            (typeof messageFromServer === 'string' && messageFromServer.trim())
+              ? messageFromServer
+              : 'Login failed',
+        };
+      }
+
+      setUser(data?.user || null);
+      return { success: true, role: data?.user?.role };
     } catch (error) {
       console.error('Login error:', error);
       return { success: false, error: 'An unexpected error occurred' };
