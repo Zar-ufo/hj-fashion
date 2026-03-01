@@ -4,8 +4,6 @@ const COOKIE_NAME = 'auth-token';
 
 // Routes that require authentication
 const PROTECTED_ROUTES = ['/account', '/checkout'];
-// Routes that only logged-out users should access
-const AUTH_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password'];
 // Routes that require ADMIN role
 const ADMIN_ROUTES = ['/admin'];
 
@@ -31,14 +29,6 @@ export async function middleware(request: NextRequest) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
-    }
-    return NextResponse.next();
-  }
-
-  // --- Auth routes: redirect logged-in users ---
-  if (AUTH_ROUTES.some((route) => pathname.startsWith(route))) {
-    if (authenticated) {
-      return NextResponse.redirect(new URL('/account', request.url));
     }
     return NextResponse.next();
   }

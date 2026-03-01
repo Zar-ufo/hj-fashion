@@ -167,7 +167,15 @@ export default function CheckoutPage() {
 
   // Don't render if not authenticated (will redirect)
   if (!isAuthenticated) {
-    return null;
+    return (
+      <div className="min-h-screen bg-white flex flex-col">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center">
+          <Loader2 className="h-12 w-12 animate-spin text-stone-400" />
+        </main>
+        <Footer />
+      </div>
+    );
   };
 
   if (success) {

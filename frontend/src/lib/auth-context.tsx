@@ -39,9 +39,6 @@ interface RegisterData {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Store the initial server version to detect backend changes
-let initialServerVersion: string | null = null;
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,22 +48,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const response = await fetch('/api/auth/session', {
         credentials: 'include',
       });
-
-      // Check for server version changes (backend restart detection)
-      // Only enable in production to avoid dev mode reload loops
-      if (process.env.NODE_ENV === 'production') {
-        const serverVersion = response.headers.get('x-server-version');
-        if (serverVersion) {
-          if (initialServerVersion === null) {
-            initialServerVersion = serverVersion;
-          } else if (initialServerVersion !== serverVersion) {
-            // Backend has changed, reload the page
-            console.log('Backend version changed, reloading page...');
-            window.location.reload();
-            return;
-          }
-        }
-      }
 
       const rawText = await response.text();
       let data: any = null;
