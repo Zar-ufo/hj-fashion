@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WishlistButton } from '@/components/WishlistButton';
 import { QuickAddToCart } from '@/components/QuickAddToCart';
+import { ShareProductButton } from '@/components/ShareProductButton';
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -90,20 +91,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <div className="flex flex-col space-y-8">
               {/* Shareable Link Button */}
               <div className="flex justify-end mb-2">
-                <button
-                  className="flex items-center gap-2 px-3 py-1.5 border border-black/20 rounded text-xs text-black/60 hover:bg-black/5 transition"
-                  onClick={() => {
-                    if (typeof window !== 'undefined') {
-                      navigator.clipboard.writeText(window.location.origin + `/product/${product.slug}`);
-                      alert('Product link copied!');
-                    }
-                  }}
-                  type="button"
-                  title="Copy product link"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 010 5.656m-3.656-3.656a4 4 0 015.656 0m-7.778 7.778a4 4 0 005.656 0l1.414-1.414a4 4 0 000-5.656m-7.778-7.778a4 4 0 015.656 0l1.414 1.414a4 4 0 010 5.656" /></svg>
-                  Share
-                </button>
+                <ShareProductButton slug={product.slug} />
               </div>
               <div className="space-y-6 pb-8 border-b border-black/10">
                 <div className="flex justify-between items-start">
@@ -277,17 +265,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
                 {suggestedProducts.map((relatedProduct) => (
-                  <div key={relatedProduct.id} className="group">
+                  <Link key={relatedProduct.id} href={`/product/${relatedProduct.slug}`} className="group block">
                     <div className="relative aspect-[3/4] overflow-hidden border-2 border-black mb-4">
-                      <Link href={`/product/${relatedProduct.slug}`}>
-                        <img
-                          src={Array.isArray(relatedProduct.images) && relatedProduct.images.length > 0 
-                            ? relatedProduct.images[0] 
-                            : 'https://images.unsplash.com/photo-1610030469983-98e550d6193c'}
-                          alt={relatedProduct.name}
-                          className="h-full w-full object-cover transition-all duration-700 group-hover:scale-105"
-                        />
-                      </Link>
+                      <img
+                        src={Array.isArray(relatedProduct.images) && relatedProduct.images.length > 0 
+                          ? relatedProduct.images[0] 
+                          : 'https://images.unsplash.com/photo-1610030469983-98e550d6193c'}
+                        alt={relatedProduct.name}
+                        className="h-full w-full object-cover transition-all duration-700 group-hover:scale-105"
+                      />
                       {/* Inner border */}
                       <div className="absolute inset-3 border border-white/20 pointer-events-none group-hover:border-white/40 transition-all" />
                       <div className="absolute top-3 right-3">
@@ -306,11 +292,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
                       <p className="text-[10px] uppercase tracking-[0.2em] text-black/40 font-medium">
                         {relatedProduct.categories?.name}
                       </p>
-                      <Link href={`/product/${relatedProduct.slug}`}>
-                        <h3 className="text-sm font-serif font-light text-black group-hover:text-black/60 transition-colors line-clamp-1 tracking-wide">
-                          {relatedProduct.name}
-                        </h3>
-                      </Link>
+                      <h3 className="text-sm font-serif font-light text-black group-hover:text-black/60 transition-colors line-clamp-1 tracking-wide">
+                        {relatedProduct.name}
+                      </h3>
                       <div className="flex items-center space-x-2">
                         <span className="text-sm font-medium text-black">${relatedProduct.price}</span>
                         {relatedProduct.original_price && (
@@ -318,7 +302,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                         )}
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
               <div className="text-center mt-16">

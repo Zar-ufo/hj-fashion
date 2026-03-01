@@ -218,7 +218,7 @@ export default async function Home() {
             {/* Products Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
               {newArrivals?.map((product, index) => (
-                <div key={product.id} className="group flex flex-col">
+                <Link key={product.id} href={`/product/${product.slug}`} className="group flex flex-col">
                   <div className="relative aspect-[3/4] overflow-hidden bg-black border-2 border-black mb-4">
                     <img
                       src={Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=1000'}
@@ -273,9 +273,9 @@ export default async function Home() {
                   {/* Product info */}
                   <div className="flex flex-col space-y-2 px-1">
                     <span className="text-[10px] uppercase tracking-[0.2em] text-black/40 font-medium">{product.categories?.name}</span>
-                    <Link href={`/product/${product.slug}`} className="text-sm md:text-base font-serif font-light text-black hover:text-black/60 truncate transition-colors tracking-wide">
+                    <div className="text-sm md:text-base font-serif font-light text-black group-hover:text-black/60 truncate transition-colors tracking-wide">
                       {product.name}
-                    </Link>
+                    </div>
                     <div className="flex items-center space-x-3">
                       <span className="text-base font-medium text-black">${product.price}</span>
                       {product.original_price && (
@@ -283,7 +283,7 @@ export default async function Home() {
                       )}
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
@@ -301,7 +301,7 @@ export default async function Home() {
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
               {featuredProducts?.map((product, index) => (
-                <div key={product.id} className="group">
+                <Link key={product.id} href={`/product/${product.slug}`} className="group block">
                   <div className="relative aspect-[3/4] overflow-hidden border-2 border-black bg-black mb-4">
                     <img
                       src={Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=1000'}
@@ -340,12 +340,12 @@ export default async function Home() {
                   </div>
                   <div className="space-y-2 px-1">
                     <span className="text-[10px] uppercase tracking-[0.2em] text-black/40 font-medium">{product.categories?.name}</span>
-                    <Link href={`/product/${product.slug}`} className="block text-sm font-serif font-light text-black hover:text-black/60 truncate transition-colors tracking-wide">
+                    <div className="block text-sm font-serif font-light text-black group-hover:text-black/60 truncate transition-colors tracking-wide">
                       {product.name}
-                    </Link>
+                    </div>
                     <span className="text-sm font-medium text-black">${product.price}</span>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
             

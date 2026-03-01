@@ -55,15 +55,13 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   }, {});
 
   const renderProductCard = (product: Product) => (
-    <div key={product.id} className="group">
+    <Link key={product.id} href={`/product/${product.slug}`} className="group block">
       <div className="relative aspect-[3/4] overflow-hidden bg-black border-2 border-black mb-5">
-        <Link href={`/product/${product.slug}`}>
-          <img
-            src={Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : 'https://images.unsplash.com/photo-1594223274512-ad4803739b7c?q=80&w=1000'}
-            alt={product.name}
-            className="h-full w-full object-cover transition-all duration-700 group-hover:scale-105"
-          />
-        </Link>
+        <img
+          src={Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : 'https://images.unsplash.com/photo-1594223274512-ad4803739b7c?q=80&w=1000'}
+          alt={product.name}
+          className="h-full w-full object-cover transition-all duration-700 group-hover:scale-105"
+        />
         <div className="absolute inset-3 border border-white/20 pointer-events-none group-hover:border-white/40 transition-all duration-500" />
         <div className="absolute top-3 left-3 w-5 h-5 border-l border-t border-white/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         <div className="absolute top-3 right-14 w-5 h-5 border-r border-t border-white/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -117,9 +115,9 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             <Star className="h-2.5 w-2.5 fill-black text-black" /> {product.ratings || 4.9}
           </span>
         </div>
-        <Link href={`/product/${product.slug}`} className="block text-sm font-serif font-light text-black hover:text-black/60 transition-colors leading-tight tracking-wide line-clamp-2">
+        <div className="block text-sm font-serif font-light text-black group-hover:text-black/60 transition-colors leading-tight tracking-wide line-clamp-2">
           {product.name}
-        </Link>
+        </div>
         <div className="flex items-center space-x-3 pt-1">
           <span className="text-base font-medium text-black">${product.price}</span>
           {product.original_price && (
@@ -127,7 +125,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           )}
         </div>
       </div>
-    </div>
+    </Link>
   );
 
   return (
