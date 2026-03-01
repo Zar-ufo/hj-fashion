@@ -5,7 +5,15 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60; // Maximum timeout for Vercel hobby plan
 
-const BACKEND_URL = process.env.BACKEND_URL?.replace(/\/$/, '');
+function getBackendUrl(): string | null {
+  const rawUrl = process.env.BACKEND_URL?.trim();
+  if (!rawUrl) return null;
+
+  const withProtocol = /^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`;
+  return withProtocol.replace(/\/$/, '');
+}
+
+const BACKEND_URL = getBackendUrl();
 
 async function proxyToBackend(
   request: NextRequest,
@@ -49,16 +57,20 @@ async function proxyToBackend(
     console.log(`[verify-email proxy] ${method} ${url}`);
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
+    const timeout = setTimeout(() => controller.abort(), 30000);
 
-    const response = await fetch(url, {
-      method,
-      headers,
-      body: method !== 'GET' ? body : undefined,
-      cache: 'no-store',
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method,
+        headers,
+        body: method !== 'GET' ? body : undefined,
+        cache: 'no-store',
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
     
     const responseText = await response.text();
     console.log(`[verify-email proxy] Response: ${response.status} - ${responseText.substring(0, 200)}`);
@@ -79,8 +91,19 @@ async function proxyToBackend(
 
     return proxyRes;
   } catch (err: unknown) {
+    const isAbortError = err instanceof Error && err.name === 'AbortError';
     const errorMessage = err instanceof Error ? err.message : String(err);
     console.error(`[verify-email proxy] Error: ${errorMessage}`);
+
+    if (isAbortError) {
+      return NextResponse.json(
+        {
+          error: 'Verification request timed out. Please try again in a moment.',
+          details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
+        },
+        { status: 504 }
+      );
+    }
     
     // Return a proper JSON error response
     return NextResponse.json(

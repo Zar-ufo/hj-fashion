@@ -210,9 +210,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resendVerificationEmail = async (email: string) => {
+    let timeout: ReturnType<typeof setTimeout> | undefined;
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
+      timeout = setTimeout(() => controller.abort(), 30000);
 
       const response = await fetch('/api/auth/verify-email', {
         method: 'PUT',
@@ -220,7 +221,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ email }),
         signal: controller.signal,
       });
-      clearTimeout(timeout);
 
       const rawText = await response.text();
       let data: any = null;
@@ -243,8 +243,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return { success: true, message: (data && data.message) || rawText };
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        return {
+          success: false,
+          error: 'Verification request timed out. Please try again in a moment.',
+        };
+      }
+
       console.error('Resend verification error:', error);
       return { success: false, error: 'An unexpected error occurred' };
+    } finally {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
     }
   };
 
