@@ -7,6 +7,8 @@ import { Footer } from '@/components/Footer';
 import { Package, Calendar, Tag, ChevronRight, User, LogOut, Mail, AlertCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'sonner';
 
@@ -34,11 +36,22 @@ interface OrderItem {
 }
 
 export default function AccountPage() {
-  const { user, isLoading, isAuthenticated, logout, resendVerificationEmail } = useAuth();
+  const { user, isLoading, isAuthenticated, logout, resendVerificationEmail, refreshSession } = useAuth();
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [resendingEmail, setResendingEmail] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    first_name: '',
+    last_name: '',
+    phone: '',
+    address: '',
+    city: '',
+    postal_code: '',
+    country: '',
+  });
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -68,6 +81,19 @@ export default function AccountPage() {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (!user) return;
+    setProfileForm({
+      first_name: user.first_name || '',
+      last_name: user.last_name || '',
+      phone: user.phone || '',
+      address: user.address || '',
+      city: user.city || '',
+      postal_code: user.postal_code || '',
+      country: user.country || '',
+    });
+  }, [user]);
+
   const handleLogout = async () => {
     await logout();
     toast.success('Logged out successfully');
@@ -86,6 +112,61 @@ export default function AccountPage() {
       toast.error(result.error || 'Failed to send verification email');
     }
     setResendingEmail(false);
+  };
+
+  const handleProfileInputChange = (field: keyof typeof profileForm, value: string) => {
+    setProfileForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleCancelEditProfile = () => {
+    if (user) {
+      setProfileForm({
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        phone: user.phone || '',
+        address: user.address || '',
+        city: user.city || '',
+        postal_code: user.postal_code || '',
+        country: user.country || '',
+      });
+    }
+    setIsEditingProfile(false);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!user?.id) return;
+
+    setSavingProfile(true);
+    try {
+      const response = await fetch(`/api/users/${user.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          first_name: profileForm.first_name.trim() || null,
+          last_name: profileForm.last_name.trim() || null,
+          phone: profileForm.phone.trim() || null,
+          address: profileForm.address.trim() || null,
+          city: profileForm.city.trim() || null,
+          postal_code: profileForm.postal_code.trim() || null,
+          country: profileForm.country.trim() || null,
+        }),
+      });
+
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        toast.error(data?.error || 'Failed to update profile');
+        return;
+      }
+
+      await refreshSession();
+      setIsEditingProfile(false);
+      toast.success('Profile updated successfully');
+    } catch {
+      toast.error('Failed to update profile');
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
   if (isLoading) {
@@ -302,10 +383,140 @@ export default function AccountPage() {
                   </div>
                 </div>
 
-                <div className="pt-8 border-t border-stone-200">
-                  <button className="w-full py-4 rounded-xl border border-stone-200 text-sm font-bold text-stone-600 hover:bg-white hover:text-stone-900 transition-all">
-                    Edit Profile Details
-                  </button>
+                <div className="pt-8 border-t border-stone-200 space-y-5">
+                  <p className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Profile Details</p>
+
+                  {isEditingProfile ? (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="profile-first-name" className="text-[10px] uppercase tracking-widest font-bold text-stone-400">First Name</Label>
+                          <Input
+                            id="profile-first-name"
+                            value={profileForm.first_name}
+                            onChange={(e) => handleProfileInputChange('first_name', e.target.value)}
+                            className="h-10 rounded-xl border-stone-200"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="profile-last-name" className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Last Name</Label>
+                          <Input
+                            id="profile-last-name"
+                            value={profileForm.last_name}
+                            onChange={(e) => handleProfileInputChange('last_name', e.target.value)}
+                            className="h-10 rounded-xl border-stone-200"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="profile-phone" className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Phone</Label>
+                        <Input
+                          id="profile-phone"
+                          value={profileForm.phone}
+                          onChange={(e) => handleProfileInputChange('phone', e.target.value)}
+                          className="h-10 rounded-xl border-stone-200"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="profile-address" className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Address</Label>
+                        <Input
+                          id="profile-address"
+                          value={profileForm.address}
+                          onChange={(e) => handleProfileInputChange('address', e.target.value)}
+                          className="h-10 rounded-xl border-stone-200"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="profile-city" className="text-[10px] uppercase tracking-widest font-bold text-stone-400">City</Label>
+                          <Input
+                            id="profile-city"
+                            value={profileForm.city}
+                            onChange={(e) => handleProfileInputChange('city', e.target.value)}
+                            className="h-10 rounded-xl border-stone-200"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="profile-postal" className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Postal Code</Label>
+                          <Input
+                            id="profile-postal"
+                            value={profileForm.postal_code}
+                            onChange={(e) => handleProfileInputChange('postal_code', e.target.value)}
+                            className="h-10 rounded-xl border-stone-200"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="profile-country" className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Country</Label>
+                        <Input
+                          id="profile-country"
+                          value={profileForm.country}
+                          onChange={(e) => handleProfileInputChange('country', e.target.value)}
+                          className="h-10 rounded-xl border-stone-200"
+                        />
+                      </div>
+
+                      <div className="flex gap-2 pt-1">
+                        <Button
+                          type="button"
+                          onClick={handleSaveProfile}
+                          disabled={savingProfile}
+                          className="flex-1 rounded-xl bg-stone-900 text-white hover:bg-stone-800"
+                        >
+                          {savingProfile ? 'Saving...' : 'Save'}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleCancelEditProfile}
+                          disabled={savingProfile}
+                          className="flex-1 rounded-xl"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Full Name</p>
+                        <p className="text-sm text-stone-700">{fullName}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Phone</p>
+                        <p className="text-sm text-stone-700">{user.phone || 'Not set'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Address</p>
+                        <p className="text-sm text-stone-700">{user.address || 'Not set'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-stone-400">City</p>
+                        <p className="text-sm text-stone-700">{user.city || 'Not set'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Postal Code</p>
+                        <p className="text-sm text-stone-700">{user.postal_code || 'Not set'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Country</p>
+                        <p className="text-sm text-stone-700">{user.country || 'Not set'}</p>
+                      </div>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsEditingProfile(true)}
+                        className="w-full rounded-xl"
+                      >
+                        Edit Profile Details
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
 
