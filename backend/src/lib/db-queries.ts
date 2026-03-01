@@ -569,6 +569,13 @@ export async function getEmailVerificationToken(token: string) {
   });
 }
 
+export async function getLatestEmailVerificationTokenForUser(userId: string) {
+  return prisma.emailVerificationToken.findFirst({
+    where: { user_id: userId },
+    orderBy: { created_at: 'desc' },
+  });
+}
+
 export async function markEmailVerificationTokenUsed(token: string) {
   return prisma.emailVerificationToken.update({
     where: { token },

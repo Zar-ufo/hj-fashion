@@ -6,6 +6,7 @@ import {
   verifyUserEmail,
   createEmailVerificationToken,
   getUserByEmail,
+  getLatestEmailVerificationTokenForUser,
 } from '@/lib/db-queries';
 import { sendEmailVerificationEmail } from '@/lib/email';
 import { generateSecureToken, validateEmail } from '@/lib/auth';
@@ -129,6 +130,20 @@ export async function PUT(request: Request) {
       });
     }
 
+    const latestToken = await getLatestEmailVerificationTokenForUser(user.id);
+    if (latestToken) {
+      const nextAllowedAt = new Date(latestToken.created_at.getTime() + 24 * 60 * 60 * 1000);
+      if (nextAllowedAt > new Date()) {
+        return NextResponse.json(
+          {
+            error: 'A verification email was already sent. You can request another verification email after 24 hours.',
+            nextAllowedAt: nextAllowedAt.toISOString(),
+          },
+          { status: 429 }
+        );
+      }
+    }
+
     // Generate new verification token
     const token = generateSecureToken();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
@@ -144,12 +159,12 @@ export async function PUT(request: Request) {
     if (!sent) {
       console.error('Verification email dispatch failed after token creation for:', email);
       return NextResponse.json({
-        message: 'Verification request received. If your inbox is slow, please wait a moment and try again.',
+        message: 'Verification request received. Please check your inbox/spam. If needed, you can request another email after 24 hours.',
       });
     }
 
     return NextResponse.json({
-      message: 'Verification email sent! Please check your inbox.',
+      message: 'Verification email sent successfully. Please check your inbox/spam. You can request another verification email after 24 hours.',
     });
   } catch (error) {
     console.error('Error resending verification email:', error);
