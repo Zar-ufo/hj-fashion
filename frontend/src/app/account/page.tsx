@@ -104,14 +104,17 @@ export default function AccountPage() {
     if (!user?.email) return;
     
     setResendingEmail(true);
-    const result = await resendVerificationEmail(user.email);
-    
-    if (result.success) {
-      toast.success(result.message || 'Verification email sent!');
-    } else {
-      toast.error(result.error || 'Failed to send verification email');
+    try {
+      const result = await resendVerificationEmail(user.email);
+
+      if (result.success) {
+        toast.success(result.message || 'Verification email sent!');
+      } else {
+        toast.error(result.error || 'Failed to send verification email');
+      }
+    } finally {
+      setResendingEmail(false);
     }
-    setResendingEmail(false);
   };
 
   const handleProfileInputChange = (field: keyof typeof profileForm, value: string) => {

@@ -5,13 +5,19 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60; // Maximum timeout for Vercel hobby plan
 
-// backend url for proxying requests; overridden by BACKEND_URL env var in prod
-const BACKEND_URL = process.env.BACKEND_URL || 'https://hj-fashion0.vercel.app';
+const BACKEND_URL = process.env.BACKEND_URL?.replace(/\/$/, '');
 
 async function proxyToBackend(
   request: NextRequest,
   method: 'GET' | 'POST' | 'PUT'
 ): Promise<NextResponse> {
+  if (!BACKEND_URL) {
+    return NextResponse.json(
+      { error: 'BACKEND_URL is not configured on the frontend deployment.' },
+      { status: 503 }
+    );
+  }
+
   const url = `${BACKEND_URL}/api/auth/verify-email`;
   
   try {
@@ -42,12 +48,17 @@ async function proxyToBackend(
 
     console.log(`[verify-email proxy] ${method} ${url}`);
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
     const response = await fetch(url, {
       method,
       headers,
       body: method !== 'GET' ? body : undefined,
       cache: 'no-store',
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
     
     const responseText = await response.text();
     console.log(`[verify-email proxy] Response: ${response.status} - ${responseText.substring(0, 200)}`);
