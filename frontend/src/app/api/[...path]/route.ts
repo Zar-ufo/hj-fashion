@@ -4,9 +4,16 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-const BACKEND_URL = process.env.BACKEND_URL || 'https://hj-fashion0.vercel.app';
+const BACKEND_URL = process.env.BACKEND_URL?.replace(/\/$/, '');
 
 async function proxy(request: NextRequest, method: string, path: string[]) {
+  if (!BACKEND_URL) {
+    return NextResponse.json(
+      { error: 'BACKEND_URL is not configured on the frontend deployment.' },
+      { status: 503 }
+    );
+  }
+
   const pathname = path.join('/');
   const search = request.nextUrl.search || '';
   const targetUrl = `${BACKEND_URL}/api/${pathname}${search}`;
