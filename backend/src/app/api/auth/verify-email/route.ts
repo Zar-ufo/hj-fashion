@@ -139,13 +139,13 @@ export async function PUT(request: Request) {
       expires_at: expiresAt,
     });
 
-    // Send verification email
+    // Send verification email (best-effort; do not hard-fail the endpoint on provider issues)
     const sent = await sendEmailVerificationEmail(email, token, user.first_name || undefined);
     if (!sent) {
-      return NextResponse.json(
-        { error: 'Failed to send verification email. Please try again later.' },
-        { status: 500 }
-      );
+      console.error('Verification email dispatch failed after token creation for:', email);
+      return NextResponse.json({
+        message: 'Verification request received. If your inbox is slow, please wait a moment and try again.',
+      });
     }
 
     return NextResponse.json({
