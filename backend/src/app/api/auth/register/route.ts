@@ -112,7 +112,10 @@ export async function POST(request: Request) {
     if (isAuthConfigurationError(error)) {
       console.error('Auth configuration error during registration:', error.message);
       return NextResponse.json(
-        { error: 'Authentication is temporarily unavailable. Please contact support.' },
+        {
+          error: 'Authentication service is misconfigured. Set JWT_SECRET in backend environment variables.',
+          code: 'AUTH_CONFIG_ERROR',
+        },
         { status: 503 }
       );
     }
@@ -120,7 +123,10 @@ export async function POST(request: Request) {
     if (isDatabaseConfigurationError(error)) {
       console.error('Database configuration error during registration:', error.message);
       return NextResponse.json(
-        { error: 'Database is temporarily unavailable. Please contact support.' },
+        {
+          error: 'Database service is misconfigured. Set DATABASE_URL in backend environment variables.',
+          code: 'DB_CONFIG_ERROR',
+        },
         { status: 503 }
       );
     }
